@@ -14,101 +14,101 @@ using namespace std;
 
 extern "C"
 {
-	/*¹¦ÄÜËµÃ÷£º³õÊ¼»¯½Ó¿Ú
-	 *²ÎÊı£º
-	 *[out]lPlayID£º²Ù×÷¾ä±ú£¬ºóÃæ½Ó¿Ú¶¼Í¨¹ı¸Ä¾ä±ú²Ù×÷
-	 *[in]sFilePath:Â¼Ïñ´æ´¢Â·¾¶
-	 *[in]w:Í¼Ïñ¿í
-	 *[in]h:Í¼Ïñ¸ß
-	 *[in]frameRate:ÊÓÆµÖ¡ÂÊ
-	 *[return] true ³É¹¦  false Ê§°Ü 
+	/*åŠŸèƒ½è¯´æ˜ï¼šåˆå§‹åŒ–æ¥å£
+	 *å‚æ•°ï¼š
+	 *[out]lPlayIDï¼šæ“ä½œå¥æŸ„ï¼Œåé¢æ¥å£éƒ½é€šè¿‡æ”¹å¥æŸ„æ“ä½œ
+	 *[in]sFilePath:å½•åƒå­˜å‚¨è·¯å¾„
+	 *[in]w:å›¾åƒå®½
+	 *[in]h:å›¾åƒé«˜
+	 *[in]frameRate:è§†é¢‘å¸§ç‡
+	 *[return] true æˆåŠŸ  false å¤±è´¥
 	*/
 	TZ_MP4 bool  __stdcall  open_mp4(unsigned int &lPlayID,const char* sFilePath, unsigned int w,unsigned int h,unsigned int frameRate);
-	/*¹¦ÄÜËµÃ÷£ºÊı¾İĞ´Èë½Ó¿Ú
-	 *²ÎÊı£º
-	 *[in]lPlayID£º²Ù×÷¾ä±ú
-	 *[in]sData:Â¼ÏñÊı¾İ
-	 *[in]nDateLen:Â¼ÏñÊı¾İ³¤¶È
-	 *[return] true ³É¹¦  false Ê§°Ü 
+	/*åŠŸèƒ½è¯´æ˜ï¼šæ•°æ®å†™å…¥æ¥å£
+	 *å‚æ•°ï¼š
+	 *[in]lPlayIDï¼šæ“ä½œå¥æŸ„
+	 *[in]sData:å½•åƒæ•°æ®
+	 *[in]nDateLen:å½•åƒæ•°æ®é•¿åº¦
+	 *[return] true æˆåŠŸ  false å¤±è´¥
 	*/
 	TZ_MP4 bool __stdcall   write_frame(unsigned int lPlayID,const char* sData,unsigned int nDateLen);
-	/*¹¦ÄÜËµÃ÷£º»ñÈ¡Ê±³¤½Ó¿Ú
-	 *²ÎÊı£º
-	 *[in]lPlayID£º²Ù×÷¾ä±ú
-	 *[out]ts:×ÜÊ±³¤
-	 *[out]cur_ts:µ±Ç°Ê±¼ä
-	 *[return] true ³É¹¦  false Ê§°Ü 
-	*/	
+	/*åŠŸèƒ½è¯´æ˜ï¼šè·å–æ—¶é•¿æ¥å£
+	 *å‚æ•°ï¼š
+	 *[in]lPlayIDï¼šæ“ä½œå¥æŸ„
+	 *[out]ts:æ€»æ—¶é•¿
+	 *[out]cur_ts:å½“å‰æ—¶é—´
+	 *[return] true æˆåŠŸ  false å¤±è´¥
+	*/
 	TZ_MP4 bool __stdcall   play_ts(unsigned int lPlayID,unsigned int &ts,unsigned int &cur_ts);
-	/*¹¦ÄÜËµÃ÷£º²¥·Å½Ó¿Ú
-	 *²ÎÊı£º
-	 *[in]lPlayID£º²Ù×÷¾ä±ú
-	 *[in]hWnd:Â¼Ïñ²¥·Å´°¿Ú¾ä±ú
-	 *[return] true ³É¹¦  false Ê§°Ü 
+	/*åŠŸèƒ½è¯´æ˜ï¼šæ’­æ”¾æ¥å£
+	 *å‚æ•°ï¼š
+	 *[in]lPlayIDï¼šæ“ä½œå¥æŸ„
+	 *[in]hWnd:å½•åƒæ’­æ”¾çª—å£å¥æŸ„
+	 *[return] true æˆåŠŸ  false å¤±è´¥
 	*/
 	TZ_MP4 bool __stdcall   play_start(unsigned int lPlayID,unsigned int hWnd);
-	/*¹¦ÄÜËµÃ÷£ºÔİÍ£²¥·Å½Ó¿Ú
-	 *²ÎÊı£º
-	 *[in]lPlayID£º²Ù×÷¾ä±ú
-	 *[return] true ³É¹¦  false Ê§°Ü 
+	/*åŠŸèƒ½è¯´æ˜ï¼šæš‚åœæ’­æ”¾æ¥å£
+	 *å‚æ•°ï¼š
+	 *[in]lPlayIDï¼šæ“ä½œå¥æŸ„
+	 *[return] true æˆåŠŸ  false å¤±è´¥
 	*/
 	TZ_MP4 bool __stdcall   play_pause(unsigned int lPlayID);
-	/*¹¦ÄÜËµÃ÷£º¼ÌĞø²¥·Å½Ó¿Ú
-	 *²ÎÊı£º
-	 *[in]lPlayID£º²Ù×÷¾ä±ú
-	 *[return] true ³É¹¦  false Ê§°Ü 
+	/*åŠŸèƒ½è¯´æ˜ï¼šç»§ç»­æ’­æ”¾æ¥å£
+	 *å‚æ•°ï¼š
+	 *[in]lPlayIDï¼šæ“ä½œå¥æŸ„
+	 *[return] true æˆåŠŸ  false å¤±è´¥
 	*/
 	TZ_MP4 bool __stdcall   play_resume(unsigned int lPlayID);
-	/*¹¦ÄÜËµÃ÷£ºÏÂÒ»Ö¡²¥·Å½Ó¿Ú
-	 *²ÎÊı£º
-	 *[in]lPlayID£º²Ù×÷¾ä±ú
-	 *[return] true ³É¹¦  false Ê§°Ü 
-	*/	
+	/*åŠŸèƒ½è¯´æ˜ï¼šä¸‹ä¸€å¸§æ’­æ”¾æ¥å£
+	 *å‚æ•°ï¼š
+	 *[in]lPlayIDï¼šæ“ä½œå¥æŸ„
+	 *[return] true æˆåŠŸ  false å¤±è´¥
+	*/
 	TZ_MP4 bool __stdcall   play_step(unsigned int lPlayID);
-	/*¹¦ÄÜËµÃ÷£ºÉÏÒ»Ö¡²¥·Å½Ó¿Ú
-	 *²ÎÊı£º
-	 *[in]lPlayID£º²Ù×÷¾ä±ú
-	 *[return] true ³É¹¦  false Ê§°Ü 
-	*/	
+	/*åŠŸèƒ½è¯´æ˜ï¼šä¸Šä¸€å¸§æ’­æ”¾æ¥å£
+	 *å‚æ•°ï¼š
+	 *[in]lPlayIDï¼šæ“ä½œå¥æŸ„
+	 *[return] true æˆåŠŸ  false å¤±è´¥
+	*/
 	TZ_MP4 bool __stdcall   play_step_prev(unsigned int lPlayID);
-	
-	/*¹¦ÄÜËµÃ÷£º¶¨Î»²¥·Å½Ó¿Ú
-	 *²ÎÊı£º
-	 *[in]lPlayID£º²Ù×÷¾ä±ú
-	 *[in]start_time:¶¨Î»Ê±¼ä
-	 *[return] true ³É¹¦  false Ê§°Ü 
+
+	/*åŠŸèƒ½è¯´æ˜ï¼šå®šä½æ’­æ”¾æ¥å£
+	 *å‚æ•°ï¼š
+	 *[in]lPlayIDï¼šæ“ä½œå¥æŸ„
+	 *[in]start_time:å®šä½æ—¶é—´
+	 *[return] true æˆåŠŸ  false å¤±è´¥
 	*/
 	TZ_MP4 bool __stdcall   play_start_time(unsigned int lPlayID,unsigned int start_time);
-	/*¹¦ÄÜËµÃ÷£º¿ªÊ¼Áí´æÎªÎÄ¼ş½Ó¿Ú
-	 *²ÎÊı£º
-	 *[in]lPlayID£º²Ù×÷¾ä±ú
-	 *[in]sSavePath:ÎÄ¼şÂ·¾¶
-	 *[return] true ³É¹¦  false Ê§°Ü 
+	/*åŠŸèƒ½è¯´æ˜ï¼šå¼€å§‹å¦å­˜ä¸ºæ–‡ä»¶æ¥å£
+	 *å‚æ•°ï¼š
+	 *[in]lPlayIDï¼šæ“ä½œå¥æŸ„
+	 *[in]sSavePath:æ–‡ä»¶è·¯å¾„
+	 *[return] true æˆåŠŸ  false å¤±è´¥
 	*/
 	TZ_MP4 bool __stdcall   play_save_start(unsigned int lPlayID,const char* sSavePath);
-	/*¹¦ÄÜËµÃ÷£º½áÊøÁí´æÎªÎÄ¼ş½Ó¿Ú
-	 *²ÎÊı£º
-	 *[in]lPlayID£º²Ù×÷¾ä±ú
-	 *[return] true ³É¹¦  false Ê§°Ü 
+	/*åŠŸèƒ½è¯´æ˜ï¼šç»“æŸå¦å­˜ä¸ºæ–‡ä»¶æ¥å£
+	 *å‚æ•°ï¼š
+	 *[in]lPlayIDï¼šæ“ä½œå¥æŸ„
+	 *[return] true æˆåŠŸ  false å¤±è´¥
 	*/
 	TZ_MP4 bool __stdcall   play_save_stop(unsigned int lPlayID);
-	/*¹¦ÄÜËµÃ÷£º±¶ËÙ²¥·Å½Ó¿Ú
-	 *²ÎÊı£º
-	 *[in]lPlayID£º²Ù×÷¾ä±ú
-	 *[in]speed:ËÙ¶È
-	 *[return] true ³É¹¦  false Ê§°Ü 
+	/*åŠŸèƒ½è¯´æ˜ï¼šå€é€Ÿæ’­æ”¾æ¥å£
+	 *å‚æ•°ï¼š
+	 *[in]lPlayIDï¼šæ“ä½œå¥æŸ„
+	 *[in]speed:é€Ÿåº¦
+	 *[return] true æˆåŠŸ  false å¤±è´¥
 	*/
 	TZ_MP4 bool __stdcall   play_speed(unsigned int lPlayID,int speed);
-	/*¹¦ÄÜËµÃ÷£ºÍ£Ö¹²¥·Å½Ó¿Ú
-	 *²ÎÊı£º
-	 *[in]lPlayID£º²Ù×÷¾ä±ú
-	 *[return] true ³É¹¦  false Ê§°Ü 
-	*/	
+	/*åŠŸèƒ½è¯´æ˜ï¼šåœæ­¢æ’­æ”¾æ¥å£
+	 *å‚æ•°ï¼š
+	 *[in]lPlayIDï¼šæ“ä½œå¥æŸ„
+	 *[return] true æˆåŠŸ  false å¤±è´¥
+	*/
 	TZ_MP4 bool __stdcall   play_stop(unsigned int lPlayID);
-	/*¹¦ÄÜËµÃ÷£º·´³õÊ¼»¯½Ó¿Ú
-	 *²ÎÊı£º
-	 *[in]lPlayID£º²Ù×÷¾ä±ú
-	 *[return] true ³É¹¦  false Ê§°Ü 
+	/*åŠŸèƒ½è¯´æ˜ï¼šååˆå§‹åŒ–æ¥å£
+	 *å‚æ•°ï¼š
+	 *[in]lPlayIDï¼šæ“ä½œå¥æŸ„
+	 *[return] true æˆåŠŸ  false å¤±è´¥
 	*/
 	TZ_MP4 bool __stdcall   close_mp4(unsigned int lPlayID);
 };
