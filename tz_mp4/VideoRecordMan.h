@@ -1,7 +1,7 @@
 #pragma once
 
 /*
-	Â¼Ïñ´¦Àí¹ÜÀíÀà
+	å½•åƒå¤„ç†ç®¡ç†ç±»
 */
 #ifndef _VIDEO_RECORD_MAN_H_
 #define	_VIDEO_RECORD_MAN_H_
