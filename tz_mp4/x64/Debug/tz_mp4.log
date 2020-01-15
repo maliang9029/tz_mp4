@@ -1,0 +1,18 @@
+﻿  VideoRecordMan.cpp
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“open_mp4”；使用第一个规范
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“write_frame”；使用第一个规范
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“play_ts”；使用第一个规范
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“play_start”；使用第一个规范
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“play_pause”；使用第一个规范
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“play_resume”；使用第一个规范
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“play_step”；使用第一个规范
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“play_step_prev”；使用第一个规范
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“play_start_time”；使用第一个规范
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“play_save_start”；使用第一个规范
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“play_save_stop”；使用第一个规范
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“play_speed”；使用第一个规范
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“play_stop”；使用第一个规范
+Tz_Mp4.obj : warning LNK4197: 多次指定导出“close_mp4”；使用第一个规范
+    正在创建库 D:\workplace\tz_mp4\x64\Debug\tz_mp4.lib 和对象 D:\workplace\tz_mp4\x64\Debug\tz_mp4.exp
+  tz_mp4.vcxproj -> D:\workplace\tz_mp4\x64\Debug\tz_mp4.dll
+  tz_mp4.vcxproj -> D:\workplace\tz_mp4\x64\Debug\tz_mp4.pdb (Full PDB)
