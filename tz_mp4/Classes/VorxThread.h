@@ -1,15 +1,3 @@
-//////////////////////////////////////////////////////////////////////
-//
-// VorxThread.h: interface for the CVorxThread class.
-// 功能:线程启动停止控制类,可跨Windows/Linux双平台
-// 说明:线程启动后,周期性地循环调用指定的功能函数
-// 作者:肖可伟
-// 日期:2007年9月10日
-// 修改:2007年9月10日
-// 版权:北京蛙视通信技术有限责任公司
-//
-//////////////////////////////////////////////////////////////////////
-
 #if !defined(AFX_VORXTHREAD_H__4CD68B43_1A04_42E5_8EA0_978D749196E5__INCLUDED_)
 #define AFX_VORXTHREAD_H__4CD68B43_1A04_42E5_8EA0_978D749196E5__INCLUDED_
 
@@ -47,14 +35,14 @@ namespace vfc
 	typedef void (*LPTHREAD_EXIT)(LPVOID lParam);
 	// 函数说明 : 线程退出时执行的回调函数
 	//////////////////////////////////////////////////////////////
-	
+
 	class CVorxThread
 	{
 	private:
 		void*	m_lParam;		//外部传入的线程参数
 		LPFUN_THREAD m_fun;		//外部传入的函数指针
 		LPTHREAD_EXIT m_exit;	//线程退出指针
-		
+
 		pthread_t m_hThread;	//线程控制句柄
 		BOOL      m_bThread;	//控制线程启动及停止
 		BOOL      m_bSuspend;	//控制线程暂停
@@ -62,7 +50,7 @@ namespace vfc
 		unsigned int m_nStackSize; // 线程栈大小
 		CVorxEvent m_oEvent;	//线程等待事件
 		static THREAD_RETURN thread_func(void* lParam);
-		
+
 	public:
 		//设置参数
 		BOOL SetParam(LPFUN_THREAD fpFunc,LPVOID lParam,int msCycle,LPTHREAD_EXIT fpExit = NULL);
@@ -86,10 +74,10 @@ namespace vfc
 		void Waken(){m_oEvent.Signal();}
 		//等待时间
 		BOOL WaitTime(DWORD dwTime);
-		
+
 		CVorxThread();
 		virtual ~CVorxThread();
-		
+
 	};
 }
 #endif // !defined(AFX_VORXTHREAD_H__4CD68B43_1A04_42E5_8EA0_978D749196E5__INCLUDED_)

@@ -67,7 +67,6 @@ namespace vfc
 #endif // defined WIN32
 
 		void GetCurrentTime();						//取当前时间
-		void GetCurrentRTCTime();					//取当前RTC(硬件)时间
 		void ToString(char* sRet,bool bSeparate);	//转换成字符串
 		bool IsValid(){return year>0;}
 		

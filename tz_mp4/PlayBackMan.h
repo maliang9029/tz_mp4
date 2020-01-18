@@ -60,7 +60,7 @@ private:
 private:
     bool m_bUsed[MAX_PLAY_CHN];
 
-    CTzMutex m_mutex;
+    CVorxMutex m_mutex;
 
     CVideoRecordMan* m_videoRecordMan;
     std::map<int,CVideoRecordMan*>  m_mapVideoRecordMan;

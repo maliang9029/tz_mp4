@@ -112,11 +112,13 @@
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>$(SolutionDir)\tz_mp4\ffmpeg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>Tz_Mp4.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <TargetMachine>MachineX64</TargetMachine>
+      <AdditionalLibraryDirectories>$(SolutionDir)\tz_mp4\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -157,6 +159,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AutoFree.cpp" />
+    <ClCompile Include="Classes\MutexInteger.cpp" />
+    <ClCompile Include="Classes\VorxThread.cpp" />
+    <ClCompile Include="Classes\VorxTimer.cpp" />
+    <ClCompile Include="Mp4Muxer.cpp" />
     <ClCompile Include="PlayBackMan.cpp" />
     <ClCompile Include="Tz_Mp4.cpp" />
     <ClCompile Include="VideoRecordMan.cpp" />
@@ -165,7 +172,13 @@
     <None Include="Tz_Mp4.def" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AutoFree.h" />
+    <ClInclude Include="Classes\MacroDefine.h" />
+    <ClInclude Include="Classes\MutexInteger.h" />
+    <ClInclude Include="Classes\VorxThread.h" />
+    <ClInclude Include="Classes\VorxTimer.h" />
     <ClInclude Include="common.h" />
+    <ClInclude Include="Mp4Muxer.h" />
     <ClInclude Include="PlayBackMan.h" />
     <ClInclude Include="Tz_Mp4.h" />
     <ClInclude Include="VideoRecordMan.h" />

@@ -1,16 +1,10 @@
 // VorxTime.cpp: implementation of the CVorxTime class.
 //
 //////////////////////////////////////////////////////////////////////
-
-#include "StdAfx.h"
 #include "VorxTime.h"
 #include <time.h>
-#ifndef WIN32
-#include <linux/rtc.h>
-#include <sys/ioctl.h>
-#include <sys/fcntl.h>
-#include <string.h>
-#endif
+#include "../IMSLog.h"
+extern PF_IMSL_WriteLog IMSL_WriteLog;
 
 namespace vfc
 {
@@ -30,153 +24,45 @@ namespace vfc
 	
 	bool CVorxTime::operator>(const CVorxTime& tm) const
 	{
-		/*if(year != tm.year) return (year>tm.year);
+		if(year != tm.year) return (year>tm.year);
 		if(month != tm.month) return (month>tm.month);
 		if(day != tm.day) return (day>tm.day);
 		if(hour != tm.hour) return (hour>tm.hour);
 		if(minute != tm.minute) return (minute>tm.minute);
-		if(second != tm.second) return (second>tm.second);*/
-		if(year > tm.year)
-			return true;
-		else if(year == tm.year)
-		{
-			if(month > tm.month) 
-				return true;
-			else if(month == tm.month)
-			{
-				if(day > tm.day) 
-					return true;
-				else if(day == tm.day)
-				{
-					if(hour > tm.hour) 
-						return true;
-					else if(hour == tm.hour) 
-					{
-						if(minute > tm.minute) 
-							return true;
-						else if(minute == tm.minute)
-						{
-							if(second > tm.second) 
-								return true;
-						}
-					}
-				}
-			}
-		}
+		if(second != tm.second) return (second>tm.second);
 		return false;
 	}
 	
 	bool CVorxTime::operator>=(const CVorxTime& tm) const
 	{
-		/*if(year != tm.year) return (year>tm.year);
+		if(year != tm.year) return (year>tm.year);
 		if(month != tm.month) return (month>tm.month);
 		if(day != tm.day) return (day>tm.day);
 		if(hour != tm.hour) return (hour>tm.hour);
 		if(minute != tm.minute) return (minute>tm.minute);
-		if(second != tm.second) return (second>tm.second);*/
-		if(year > tm.year)
-			return true;
-		else if(year == tm.year)
-		{
-			if(month > tm.month) 
-				return true;
-			else if(month == tm.month)
-			{
-				if(day > tm.day) 
-					return true;
-				else if(day == tm.day)
-				{
-					if(hour > tm.hour) 
-						return true;
-					else if(hour == tm.hour) 
-					{
-						if(minute > tm.minute) 
-							return true;
-						else if(minute == tm.minute)
-						{
-							if(second > tm.second) 
-								return true;
-						}
-					}
-				}
-			}
-		}
+		if(second != tm.second) return (second>tm.second);
 		return true;	
 	}
 	
 	bool CVorxTime::operator<(const CVorxTime& tm) const
 	{
-		/*if(year != tm.year) return (year<tm.year);
+		if(year != tm.year) return (year<tm.year);
 		if(month != tm.month) return (month<tm.month);
 		if(day != tm.day) return (day<tm.day);
 		if(hour != tm.hour) return (hour<tm.hour);
 		if(minute != tm.minute) return (minute<tm.minute);
-		if(second != tm.second) return (second<tm.second);*/
-		if(year > tm.year)
-			return true;
-		else if(year == tm.year)
-		{
-			if(month > tm.month) 
-				return true;
-			else if(month == tm.month)
-			{
-				if(day > tm.day) 
-					return true;
-				else if(day == tm.day)
-				{
-					if(hour > tm.hour) 
-						return true;
-					else if(hour == tm.hour) 
-					{
-						if(minute > tm.minute) 
-							return true;
-						else if(minute == tm.minute)
-						{
-							if(second > tm.second) 
-								return true;
-						}
-					}
-				}
-			}
-		}
+		if(second != tm.second) return (second<tm.second);
 		return false;
 	}
 	
 	bool CVorxTime::operator<=(const CVorxTime& tm) const
 	{
-		/*if(year != tm.year) return (year<tm.year);
+		if(year != tm.year) return (year<tm.year);
 		if(month != tm.month) return (month<tm.month);
 		if(day != tm.day) return (day<tm.day);
 		if(hour != tm.hour) return (hour<tm.hour);
 		if(minute != tm.minute) return (minute<tm.minute);
-		if(second != tm.second) return (second<tm.second);*/
-		if(year > tm.year)
-			return true;
-		else if(year == tm.year)
-		{
-			if(month > tm.month) 
-				return true;
-			else if(month == tm.month)
-			{
-				if(day > tm.day) 
-					return true;
-				else if(day == tm.day)
-				{
-					if(hour > tm.hour) 
-						return true;
-					else if(hour == tm.hour) 
-					{
-						if(minute > tm.minute) 
-							return true;
-						else if(minute == tm.minute)
-						{
-							if(second > tm.second) 
-								return true;
-						}
-					}
-				}
-			}
-		}
+		if(second != tm.second) return (second<tm.second);
 		return true;
 	}
 	
@@ -236,47 +122,7 @@ namespace vfc
 		minute = curTime.wMinute;
 		second = curTime.wSecond;
 #endif
-	}
-
-	void CVorxTime::GetCurrentRTCTime()
-	{
-		memset(this,0,sizeof(CVorxTime));
-#ifndef WIN32
-		int rtc, nRet;
-		struct rtc_time rtc_tm;
-		// 打开
-		rtc = open("/dev/rtc", O_RDONLY);
-		if (-1 == rtc)
-		{
-			perror("/dev/rtc");
-			return;
-		}
-		// 取时间
-		nRet = ioctl(rtc, RTC_RD_TIME, &rtc_tm);
-		if (-1 == nRet)
-		{
-			perror("ioctl");
-			return;
-		}
-		// 保存到内存
-		year = rtc_tm.tm_year + 1900;
-		month = rtc_tm.tm_mon + 1;
-		day = rtc_tm.tm_mday;
-		hour = rtc_tm.tm_hour;
-		minute = rtc_tm.tm_min;
-		second = rtc_tm.tm_sec;
-		//
-		close(rtc);
-#else
-		SYSTEMTIME curTime;
-		GetLocalTime(&curTime);
-		year = curTime.wYear;
-		month = curTime.wMonth;
-		day = curTime.wDay;
-		hour = curTime.wHour;
-		minute = curTime.wMinute;
-		second = curTime.wSecond;
-#endif
+		
 	}
 	
 	bool CVorxTime::SetValue(LPCTSTR sTime)
@@ -372,7 +218,6 @@ namespace vfc
 			second = pVal->tm_sec;
 		}
 	}
-
 #ifdef WIN32
 	void CVorxTime::SetTime(SYSTEMTIME tm)
 	{

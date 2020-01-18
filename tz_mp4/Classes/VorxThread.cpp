@@ -1,16 +1,5 @@
-// VorxThread.cpp: implementation of the CVorxThread class.
-//
-//////////////////////////////////////////////////////////////////////
-
-#include "StdAfx.h"
 #include "VorxThread.h"
-#include "GlobalFunction.h"
 
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -54,11 +43,7 @@ BOOL CVorxThread::StartThread()
 #ifdef WIN32
 	m_hThread = (HANDLE)_beginthread(thread_func,m_nStackSize,this);
 #else
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	pthread_attr_setstacksize(&attr, m_nStackSize);
-	pthread_create(&m_hThread,&attr,thread_func,this);
-	pthread_attr_destroy(&attr);
+	pthread_create(&m_hThread,NULL,thread_func,this);
 #endif
 	return (m_hThread != 0);
 }
@@ -70,12 +55,11 @@ void CVorxThread::StopThread()
 		m_bThread = FALSE;
 		//激发事件,通知线程结束
 		m_oEvent.Signal();
-		Sleep(80);
 		//等待线程返回
 		if(m_hThread)
 		{
 #ifdef WIN32
-			if(WaitForSingleObject(m_hThread,1000) == WAIT_TIMEOUT)
+			if(WaitForSingleObject(m_hThread,3000) == WAIT_TIMEOUT)
 			{
 				DWORD dwExitCode;
 				GetExitCodeThread(m_hThread,&dwExitCode);
@@ -148,19 +132,7 @@ THREAD_RETURN CVorxThread::thread_func(void* lParam)
 	{
 		if (pThis->m_bSuspend) // 暂停
 		{
-			if (50 > pThis->m_nCycle)
-			{
-				Sleep(pThis->m_nCycle);
-			}
-			else
-			{
-				int i, nCount = pThis->m_nCycle/50; // ??
-				for (i = 0; i < nCount; ++i)
-				{
-					if (!pThis->m_bThread) break;
-					Sleep(50);
-				}
-			}
+			Sleep(pThis->m_nCycle);
 			continue;
 		}
 
@@ -178,19 +150,7 @@ THREAD_RETURN CVorxThread::thread_func(void* lParam)
 			break;
 
 		case 0://实现休眠,修正校时可能会产品的误差
-			if (50 > pThis->m_nCycle)
-			{
-				Sleep(pThis->m_nCycle);
-			}
-			else
-			{
-				int i, nCount = pThis->m_nCycle/50; // ??
-				for (i = 0; i < nCount; ++i)
-				{
-					if (!pThis->m_bThread) break;
-					Sleep(50);
-				}
-			}
+			Sleep(pThis->m_nCycle);
 /*
 			if (3600000 >= VGAPI_GetMillisecond()-tTime) // 一小时以内的值有效
 			{
@@ -226,7 +186,6 @@ THREAD_RETURN CVorxThread::thread_func(void* lParam)
 
 BOOL CVorxThread::WaitTime(DWORD dwTime)
 {
-	m_oEvent.Unsignal();
 	if(m_oEvent.WaitForSignal(dwTime))
 	{
 		return FALSE; // 接收到退出事件

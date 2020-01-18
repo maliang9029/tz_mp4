@@ -1,5 +1,5 @@
-#ifndef _MACRO_DEFINE_HEAD_FILE
-#define _MACRO_DEFINE_HEAD_FILE
+#ifndef _VORX_MACRO_DEFINE_HEAD_FILE
+#define _VORX_MACRO_DEFINE_HEAD_FILE
 
 #ifdef _MSC_VER
 #pragma warning( disable : 4786 )
@@ -12,13 +12,14 @@ using namespace std;
 #include <stdio.h>
 
 #ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <Mmsystem.h>
+#pragma comment(lib,"Winmm.lib") 
 #include <process.h>
 #include <conio.h>
-//#include <Winsock2.h>
-//#pragma comment(lib,"Ws2_32.lib")
-#include <Mmsystem.h>
-#pragma comment(lib, "Winmm.lib")
+#include <Winsock2.h>
+#pragma comment(lib,"Ws2_32.lib")
 #else
 #include <unistd.h>
 #include <termios.h>
@@ -33,9 +34,7 @@ using namespace std;
 // CKK ADD 2010-09-13
 #include <sys/types.h>
 #include <netdb.h>
-#ifdef VORX_SRV
 #include <ifaddrs.h>
-#endif // defined VORX_SRV
 
 #define TRACE printf
 #endif
@@ -60,9 +59,8 @@ using namespace std;
 #define HTHREAD HANDLE										//线程句柄
 #define CREATE_THREAD(handle,addr) handle = (HANDLE)_beginthread(addr,0,this)		//启动线程
 #define BEGIN_THREAD(handle,addr,param) handle = (HANDLE)_beginthread(addr,0,param)	//启动线程
-//1秒改为5秒，防止线程强制关闭时导致的堆栈损坏 2015.5.12
 #define WAIT_FOR_THREAD(handle) \
-	if(WaitForSingleObject(handle,5000) == WAIT_TIMEOUT)\
+	if(WaitForSingleObject(handle,1000) == WAIT_TIMEOUT)\
 	{\
 		DWORD dwExitCode;\
 		GetExitCodeThread(handle,&dwExitCode);\
@@ -91,7 +89,7 @@ typedef int socklen_t;
 #define ULONG unsigned long
 #define UINT unsigned int
 #define WORD unsigned short
-#define DWORD unsigned int
+#define DWORD unsigned long
 #define LPCTSTR const char*
 #define BOOL int
 #define TRUE 1

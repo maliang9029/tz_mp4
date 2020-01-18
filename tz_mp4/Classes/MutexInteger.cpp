@@ -2,7 +2,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h"
 #include "MutexInteger.h"
 #ifndef WIN32
 #include <sys/time.h>
@@ -23,38 +22,35 @@ namespace vfc
 	{
 #ifndef USE_CHECK_EVENT
 #ifdef WIN32 
-		m_hEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
-#else // defined WIN32
+		m_hEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+#else
 		pthread_cond_init(&m_hEvent,NULL);
-#ifdef VORX_SRV // 高性能linux
+
+		// CKK Update 
 		pthread_mutexattr_init(&attr); 
 		pthread_mutexattr_settype(&attr,PTHREAD_MUTEX_RECURSIVE_NP);
 		pthread_mutex_init(&m_mutex, &attr);
-#else // 低性能linux
-		pthread_mutex_init(&m_mutex, NULL);
-#endif // defined VORX_SRV
-#endif // defined WIN32
-#else // defined USE_CHECK_EVENT
+		
+#endif
+#else
 		m_mutex.Lock();
 		m_bSignal = FALSE;
 		m_mutex.Unlock();
-#endif // defined USE_CHECK_EVENT
+#endif
 	}
 	
 	CVorxEvent::CVorxEvent(const CVorxEvent &ref)
 	{
 #ifdef WIN32 
-		m_hEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
-#else // defined WIN32
+		m_hEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+#else
 		pthread_cond_init(&m_hEvent,NULL);
-#ifdef VORX_SRV // 高性能linux
+		// CKK Update 
 		pthread_mutexattr_init(&attr); 
 		pthread_mutexattr_settype(&attr,PTHREAD_MUTEX_RECURSIVE_NP);
 		pthread_mutex_init(&m_mutex, &attr);
-#else // 低性能linux
-		pthread_mutex_init(&m_mutex, NULL);
-#endif // defined VORX_SRV
-#endif // defined WIN32
+		
+#endif
 	}
 
 	CVorxEvent::~CVorxEvent()
@@ -64,8 +60,10 @@ namespace vfc
 #ifdef WIN32 
 		CloseHandle(m_hEvent);
 #else
+		
 		pthread_cond_destroy(&m_hEvent);
 		pthread_mutex_destroy(&m_mutex);
+		
 #endif
 
 #else
@@ -80,16 +78,22 @@ namespace vfc
 #ifndef USE_CHECK_EVENT
 
 #ifdef WIN32
-		BOOL bRet = (WaitForSingleObject(m_hEvent,nTimeOut) == WAIT_OBJECT_0);
-		ResetEvent(m_hEvent);
-		return bRet;
+		if (WaitForSingleObject(m_hEvent,nTimeOut) == WAIT_OBJECT_0)
+			return TRUE;
+		else
+			return FALSE;
 #else
 		int ret = 0;
-		if (INFINITE == nTimeOut)
+		if (0xFFFFFFFF == nTimeOut)
 		{
+			
 			pthread_mutex_lock(&m_mutex);
+			
 			ret = pthread_cond_wait(&m_hEvent, &m_mutex);
+			
 			pthread_mutex_unlock(&m_mutex);
+			
+			
 		}
 		else
 		{
@@ -137,33 +141,20 @@ namespace vfc
 #ifdef WIN32
 		SetEvent(m_hEvent);
 #else
+		
 		pthread_mutex_lock(&m_mutex);
+		
 		pthread_cond_signal(&m_hEvent);
+		
 		pthread_mutex_unlock(&m_mutex);
+		
+		
 #endif
 #else
 		m_mutex.Lock();
 		m_bSignal = TRUE;
 		m_mutex.Unlock();
 #endif
-	}
-
-	void CVorxEvent::Unsignal()
-	{
-#ifndef USE_CHECK_EVENT
-#ifdef WIN32
-		ResetEvent(m_hEvent);
-#else // defined WIN32
-		pthread_mutex_lock(&m_mutex);
-		pthread_cond_destroy(&m_hEvent);
-		pthread_cond_init(&m_hEvent, NULL);
-		pthread_mutex_unlock(&m_mutex);
-#endif // defined WIN32
-#else // !defined USE_CHECK_EVENT
-		m_mutex.Lock();
-		m_bSignal = FALSE;
-		m_mutex.Unlock();
-#endif // !defined USE_CHECK_EVENT
 	}
 	
 	//////////////////////////////////////////////////////////////////////
@@ -178,11 +169,6 @@ namespace vfc
 	CMutexInteger::CMutexInteger(const CMutexInteger &ref)
 	{
 		m_nValue = ref.m_nValue;
-	}
-	
-	CMutexInteger::CMutexInteger(const int nVal)
-	{
-		m_nValue = nVal;
 	}
 	
 	CMutexInteger::~CMutexInteger()
@@ -221,11 +207,10 @@ namespace vfc
 		return (m_nValue | nParam);
 	}
 	
-	const CMutexInteger& CMutexInteger::operator=(int nParam)
+	void  CMutexInteger::operator=(int nParam)
 	{
 		CAutoMutex l(&m_mutex);
 		m_nValue = nParam;
-		return *this;
 	}
 	
 	bool CMutexInteger::operator==(int nParam)
@@ -312,10 +297,12 @@ namespace vfc
 		return m_nValue;
 	}
 	
-	const CMutexInteger& CMutexInteger::operator=(const CMutexInteger& nParam)
+	void CMutexInteger::operator=(const CMutexInteger& nParam)
 	{
 		CAutoMutex l(&m_mutex);
 		m_nValue = nParam.m_nValue;
-		return *this;
 	}
 }
+
+
+

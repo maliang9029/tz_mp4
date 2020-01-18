@@ -2,11 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h"
 #include "VorxTimer.h"
-#ifdef WIN32
-#include <mmsystem.h>
-#endif
 //#pragma comment(lib, "Kernel32.lib")
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -21,12 +17,12 @@ namespace vfc
 		m_msCycle = 0;
 		m_hTimer = NULL;
 	}
-	
+
 	CVorxTimer::~CVorxTimer()
 	{
 		Stop();
 	}
-	
+
 	//设置参数
 	void CVorxTimer::SetParam(LFTIMER_PROC fpFunc,LPVOID lParam,int msCycle,LFTIMER_EXIT fpExit)
 	{
@@ -35,7 +31,7 @@ namespace vfc
 		m_lParam = lParam;
 		m_msCycle = msCycle;
 	}
-	
+
 #ifndef TIME_KILL_SYNCHRONOUS
 #define TIME_KILL_SYNCHRONOUS (0x0100)
 #endif
@@ -44,12 +40,12 @@ namespace vfc
 	{
 		if(IsRuning())StopTimer();
 #ifdef WIN32
-		m_hTimer = timeSetEvent(m_msCycle,1,TimerProc,(ULONG)this,TIME_PERIODIC|TIME_KILL_SYNCHRONOUS);
+		m_hTimer = timeSetEvent(m_msCycle,1,TimerProc,(DWORD_PTR)this,TIME_PERIODIC|TIME_KILL_SYNCHRONOUS);
 #else
-		struct sigevent se;   
+		struct sigevent se;
 		memset(&se,0,sizeof(se));
 		se.sigev_notify = SIGEV_THREAD;
-		se.sigev_notify_function = TimerProc;   
+		se.sigev_notify_function = TimerProc;
 		se.sigev_value.sival_int = (long)this;
 
 		BOOL ret = FALSE;
@@ -72,7 +68,7 @@ namespace vfc
 #endif
 		return (m_hTimer != NULL);
 	}
-	
+
 	//停止定时器
 	void CVorxTimer::StopTimer()
 	{
@@ -85,11 +81,11 @@ namespace vfc
 #endif
 			m_hTimer = NULL;
 			if(m_fpExit)m_fpExit(m_lParam);
-		}	
+		}
 	}
-	
+
 #ifdef WIN32
-	void CALLBACK CVorxTimer::TimerProc(UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
+	void CALLBACK CVorxTimer::TimerProc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
 #else
 	void CVorxTimer::TimerProc(sigval_t v)
 #endif

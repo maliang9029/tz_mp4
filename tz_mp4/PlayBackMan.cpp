@@ -45,11 +45,11 @@ CPlayBackMan* CPlayBackMan::GetInstance()
 bool CPlayBackMan::open_mp4(unsigned int &lPlayID,const char* sFilePath, unsigned int w,unsigned int h,unsigned int frameRate)
 {
 
-    CVideoRecordMan* videoRecordMan = new CVideoRecordMan(sFilePath,w,h,frameRate);
-    if(!videoRecordMan)
-        return false;
     int nPlayID = lPlayID = getFreePlayId();
     if(nPlayID == -1)
+        return false;
+    CVideoRecordMan* videoRecordMan = new CVideoRecordMan(sFilePath, nPlayID, w, h, frameRate);
+    if(!videoRecordMan)
         return false;
     m_mapVideoRecordMan.insert(make_pair(nPlayID,videoRecordMan));
 
