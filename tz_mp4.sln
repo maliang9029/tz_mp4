@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tz_mp4", "tz_mp4\tz_mp4.vcx
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tz_mp4_demo", "tz_mp4_demo\tz_mp4_demo.csproj", "{B4F8C3CE-BC9D-4A8D-8DF7-45DB940887F8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dlltest", "dlltest\dlltest.vcxproj", "{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,20 @@ Global
 		{B4F8C3CE-BC9D-4A8D-8DF7-45DB940887F8}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{B4F8C3CE-BC9D-4A8D-8DF7-45DB940887F8}.Release|Win32.ActiveCfg = Release|Any CPU
 		{B4F8C3CE-BC9D-4A8D-8DF7-45DB940887F8}.Release|x64.ActiveCfg = Release|Any CPU
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Debug|Win32.Build.0 = Debug|Win32
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Debug|x64.ActiveCfg = Debug|x64
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Debug|x64.Build.0 = Debug|x64
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Release|Any CPU.ActiveCfg = Release|Win32
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Release|Win32.ActiveCfg = Release|Win32
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Release|Win32.Build.0 = Release|Win32
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Release|x64.ActiveCfg = Release|x64
+		{142D7EF7-05EB-4AAB-B7ED-732E67BABBC5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

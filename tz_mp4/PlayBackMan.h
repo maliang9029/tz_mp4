@@ -63,7 +63,7 @@ private:
     CVorxMutex m_mutex;
 
     CVideoRecordMan* m_videoRecordMan;
-    std::map<int,CVideoRecordMan*>  m_mapVideoRecordMan;
+    std::map<int,CVideoRecordMan*> m_mapVideoRecordMan;
     // 唯一单实例对象指针
     static CPlayBackMan *g_pPlayBackMan;
 };

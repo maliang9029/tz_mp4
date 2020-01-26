@@ -16,12 +16,27 @@
 using namespace std;
 
 #include "Classes/VorxTimer.h"
+#include "Classes/VorxTime.h"
 #include "Classes/MutexInteger.h"
 #include "Classes/VorxThread.h"
 using namespace vfc;
 
 #define MAX_READ_PACKETS                    128
-#define MP4_ERROR_SUCCESS                   0
+#define DEFAULT_RECOED_TIMING               20*1000//20s
+#define MP4_SUCCESS                         0
+#define MP4_ERROR                           1
+#if 0
+#define DEFAULT_MAX_FRAGMENT                30*60*1000//30min
+#define DEFAULT_RECORD_PERIOD               2*60*60*1000//2h
+#define DEFAULT_FILE_PERIOD                 24*60*60*1000//24h
+#else
+#define DEFAULT_MAX_FRAGMENT                10*1000//10s
+#define DEFAULT_RECORD_PERIOD               2*60*1000//2min
+#define DEFAULT_FILE_PERIOD                 5*60*60*1000//5min
+#endif
+
+
+
 // free the p and set to NULL.
 // p must be a T*.
 #define safe_freep(p) \

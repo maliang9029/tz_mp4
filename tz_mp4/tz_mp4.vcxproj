@@ -21,6 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C79D3BF8-2009-4F53-8639-8A2D0AA91618}</ProjectGuid>
     <RootNamespace>tz_mp4</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -162,6 +163,7 @@
     <ClCompile Include="AutoFree.cpp" />
     <ClCompile Include="Classes\MutexInteger.cpp" />
     <ClCompile Include="Classes\VorxThread.cpp" />
+    <ClCompile Include="Classes\VorxTime.cpp" />
     <ClCompile Include="Classes\VorxTimer.cpp" />
     <ClCompile Include="Mp4Muxer.cpp" />
     <ClCompile Include="PlayBackMan.cpp" />
@@ -176,6 +178,7 @@
     <ClInclude Include="Classes\MacroDefine.h" />
     <ClInclude Include="Classes\MutexInteger.h" />
     <ClInclude Include="Classes\VorxThread.h" />
+    <ClInclude Include="Classes\VorxTime.h" />
     <ClInclude Include="Classes\VorxTimer.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="Mp4Muxer.h" />

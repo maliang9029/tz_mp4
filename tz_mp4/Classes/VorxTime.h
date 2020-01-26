@@ -13,7 +13,7 @@
 
 namespace vfc
 {
-	class CVorxTime 
+	class CVorxTime
 	{
 	public:
 #ifdef BIG_EDIAN
@@ -22,7 +22,7 @@ namespace vfc
 		UINT32 day:5;								//日
 		UINT32 hour:5;								//时
 		UINT32 minute:6;							//分
-		
+
 		UINT32 second:6;							//秒
 		UINT32 enable:1;							//是否有效
 		UINT32 used:1;								//是否使用
@@ -34,14 +34,14 @@ namespace vfc
 		UINT32 day:5;								//日
 		UINT32 month:4;								//月
 		UINT32 year:12;								//年
-		
+
 		UINT32 reserved:23;							//保留
 		UINT32 cover:1;								//是否覆盖
 		UINT32 used:1;								//是否使用
 		UINT32 enable:1;							//是否有效
 		UINT32 second:6;							//秒
 #endif
-		
+
 	public:
 		bool operator>(const CVorxTime& tm) const;	//时间比较运算符重载
 		bool operator>=(const CVorxTime& tm) const;
@@ -67,9 +67,9 @@ namespace vfc
 #endif // defined WIN32
 
 		void GetCurrentTime();						//取当前时间
-		void ToString(char* sRet,bool bSeparate);	//转换成字符串
+		void ToString(char* sRet,int len,bool bSeparate);	//转换成字符串
 		bool IsValid(){return year>0;}
-		
+
 		CVorxTime();
 		~CVorxTime();
 	};

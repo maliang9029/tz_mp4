@@ -4,6 +4,7 @@ CPlayBackMan* CPlayBackMan::g_pPlayBackMan = new (std::nothrow) CPlayBackMan;
 
 CPlayBackMan::CPlayBackMan(void)
 {
+    memset(m_bUsed,false,9);
 }
 
 CPlayBackMan::~CPlayBackMan(void)
@@ -49,10 +50,14 @@ bool CPlayBackMan::open_mp4(unsigned int &lPlayID,const char* sFilePath, unsigne
     if(nPlayID == -1)
         return false;
     CVideoRecordMan* videoRecordMan = new CVideoRecordMan(sFilePath, nPlayID, w, h, frameRate);
-    if(!videoRecordMan)
+    if(!videoRecordMan || videoRecordMan->init_record() != true) {
         return false;
-    m_mapVideoRecordMan.insert(make_pair(nPlayID,videoRecordMan));
+    }
 
+    {
+        CAutoMutex lock(&m_mutex);
+        m_mapVideoRecordMan.insert(make_pair(nPlayID,videoRecordMan));
+    }
 
     return true;
 }
@@ -68,9 +73,13 @@ CVideoRecordMan* CPlayBackMan::getVideoRecordManHandle(unsigned int lPlayID)
     return NULL;
 }
 
-bool CPlayBackMan::write_frame(unsigned int lPlayID,const char* sData,unsigned int nDateLen)
+bool CPlayBackMan::write_frame(unsigned int lPlayID,const char* sData,unsigned int sDatasData)
 {
-    return true;
+    CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
+    if (videoRecordMan) {
+        return videoRecordMan->write_frame(sData, sDatasData);
+    }
+    return false;
 }
 
 bool CPlayBackMan::play_ts(unsigned int lPlayID,unsigned int &ts,unsigned int &cur_ts)
@@ -134,5 +143,15 @@ bool CPlayBackMan::play_stop(unsigned int lPlayID)
 
 bool CPlayBackMan::close_mp4(unsigned int lPlayID)
 {
+    CAutoMutex lock(&m_mutex);
+    map<int,CVideoRecordMan*>::const_iterator it;
+    for(it = m_mapVideoRecordMan.begin(); it != m_mapVideoRecordMan.end(); it++) {
+        if (it->first == lPlayID) {
+            CVideoRecordMan* videoRecordMan =  it->second;
+            safe_freep(videoRecordMan);
+            m_mapVideoRecordMan.erase(it);
+            break;
+        }
+    }
     return true;
 }

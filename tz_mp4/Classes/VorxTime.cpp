@@ -3,25 +3,23 @@
 //////////////////////////////////////////////////////////////////////
 #include "VorxTime.h"
 #include <time.h>
-#include "../IMSLog.h"
-extern PF_IMSL_WriteLog IMSL_WriteLog;
 
 namespace vfc
 {
 	//////////////////////////////////////////////////////////////////////
 	// Construction/Destruction
 	//////////////////////////////////////////////////////////////////////
-	
+
 	CVorxTime::CVorxTime()
 	{
-		memset(this,0,sizeof(CVorxTime));	
+		memset(this,0,sizeof(CVorxTime));
 	}
-	
+
 	CVorxTime::~CVorxTime()
 	{
-		
+
 	}
-	
+
 	bool CVorxTime::operator>(const CVorxTime& tm) const
 	{
 		if(year != tm.year) return (year>tm.year);
@@ -32,7 +30,7 @@ namespace vfc
 		if(second != tm.second) return (second>tm.second);
 		return false;
 	}
-	
+
 	bool CVorxTime::operator>=(const CVorxTime& tm) const
 	{
 		if(year != tm.year) return (year>tm.year);
@@ -41,9 +39,9 @@ namespace vfc
 		if(hour != tm.hour) return (hour>tm.hour);
 		if(minute != tm.minute) return (minute>tm.minute);
 		if(second != tm.second) return (second>tm.second);
-		return true;	
+		return true;
 	}
-	
+
 	bool CVorxTime::operator<(const CVorxTime& tm) const
 	{
 		if(year != tm.year) return (year<tm.year);
@@ -54,7 +52,7 @@ namespace vfc
 		if(second != tm.second) return (second<tm.second);
 		return false;
 	}
-	
+
 	bool CVorxTime::operator<=(const CVorxTime& tm) const
 	{
 		if(year != tm.year) return (year<tm.year);
@@ -65,7 +63,7 @@ namespace vfc
 		if(second != tm.second) return (second<tm.second);
 		return true;
 	}
-	
+
 	bool CVorxTime::operator==(const CVorxTime& tm) const
 	{
 		if(year != tm.year) return false;
@@ -122,9 +120,9 @@ namespace vfc
 		minute = curTime.wMinute;
 		second = curTime.wSecond;
 #endif
-		
+
 	}
-	
+
 	bool CVorxTime::SetValue(LPCTSTR sTime)
 	{
 		int nYear,nMonth,nDay,nHour,nMinute,nSecond;
@@ -183,13 +181,13 @@ namespace vfc
 	{
 		SetTime(GetTime()-tm);
 	}
-	
-	void CVorxTime::ToString(char* sRet,bool bSeparate)
+
+	void CVorxTime::ToString(char* sRet, int len, bool bSeparate)
 	{
 		if(bSeparate)
-			sprintf(sRet,"%04d-%02d-%02d %02d:%02d:%02d",year,month,day,hour,minute,second);
+			snprintf(sRet, len,"%04d-%02d-%02d %02d:%02d:%02d",year,month,day,hour,minute,second);
 		else
-			sprintf(sRet,"%04d%02d%02d%02d%02d%02d",year,month,day,hour,minute,second);
+			snprintf(sRet,len,"%04d%02d%02d%02d%02d%02d",year,month,day,hour,minute,second);
 	}
 
 	time_t CVorxTime::GetTime() const
