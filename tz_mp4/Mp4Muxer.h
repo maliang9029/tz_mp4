@@ -3,29 +3,6 @@
 #define _MP4_MUXER_H_
 #include "common.h"
 
-extern "C"
-{
-    #include "ffmpeg\include\libavcodec\avcodec.h"
-    #include "ffmpeg\include\libavformat\avformat.h"
-    #include "ffmpeg\include\libavutil\channel_layout.h"
-    #include "ffmpeg\include\libavutil\common.h"
-    #include "ffmpeg\include\libavutil\imgutils.h"
-    #include "ffmpeg\include\libswscale\swscale.h"
-    #include "ffmpeg\include\libavutil\imgutils.h"
-    #include "ffmpeg\include\libavutil\opt.h"
-    #include "ffmpeg\include\libavutil\mathematics.h"
-    #include "ffmpeg\include\libavutil\samplefmt.h"
-    #include "ffmpeg\include\libavutil\avutil.h"
-};
-#pragma comment(lib, "avcodec.lib")
-#pragma comment(lib, "avformat.lib")
-#pragma comment(lib, "avdevice.lib")
-#pragma comment(lib, "avfilter.lib")
-#pragma comment(lib, "avutil.lib")
-#pragma comment(lib, "postproc.lib")
-#pragma comment(lib, "swresample.lib")
-#pragma comment(lib, "swscale.lib")
-
 enum HEVCNALUnitType {
     HEVC_NAL_TRAIL_N    = 0,
     HEVC_NAL_TRAIL_R    = 1,

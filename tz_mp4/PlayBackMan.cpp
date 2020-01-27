@@ -50,8 +50,11 @@ bool CPlayBackMan::open_mp4(unsigned int &lPlayID,const char* sFilePath, unsigne
     if(nPlayID == -1)
         return false;
     CVideoRecordMan* videoRecordMan = new CVideoRecordMan(sFilePath, nPlayID, w, h, frameRate);
-    if(!videoRecordMan || videoRecordMan->init_record() != true) {
+    if(!videoRecordMan) {
         return false;
+    }
+    if (videoRecordMan->init_record() != true) {
+        //return false;
     }
 
     {
@@ -73,17 +76,20 @@ CVideoRecordMan* CPlayBackMan::getVideoRecordManHandle(unsigned int lPlayID)
     return NULL;
 }
 
-bool CPlayBackMan::write_frame(unsigned int lPlayID,const char* sData,unsigned int sDatasData)
+bool CPlayBackMan::write_frame(unsigned int lPlayID,const char* sData,unsigned int nDateLen)
 {
     CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
     if (videoRecordMan) {
-        return videoRecordMan->write_frame(sData, sDatasData);
+        return videoRecordMan->write_frame(sData, nDateLen);
     }
     return false;
 }
 
 bool CPlayBackMan::play_ts(unsigned int lPlayID,unsigned int &ts,unsigned int &cur_ts)
 {
+    CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
+    if(!videoRecordMan)
+        return false;
     return true;
 }
 
@@ -93,51 +99,92 @@ bool CPlayBackMan::play_start(unsigned int lPlayID,unsigned int hWnd)
     if(!videoRecordMan)
         return false;
 
-    return true;
+	return videoRecordMan->play_start(hWnd);
 }
 
 bool CPlayBackMan::play_pause(unsigned int lPlayID)
 {
-    return true;
+    CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
+    if(!videoRecordMan)
+        return false;
+	return videoRecordMan->play_pause();
 }
 
 bool CPlayBackMan::play_resume(unsigned int lPlayID)
 {
-    return true;
+    CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
+    if(!videoRecordMan)
+        return false;
+	return videoRecordMan->play_resume();
 }
 
 bool CPlayBackMan::play_step(unsigned int lPlayID)
 {
-    return true;
+    CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
+    if(!videoRecordMan)
+        return false;
+	return videoRecordMan->play_step();
 }
 
+bool CPlayBackMan::play_seek(unsigned int lPlayID,unsigned int ntime)
+{
+	CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
+	if(!videoRecordMan)
+		return false;
+	return videoRecordMan->play_seek(ntime);
+}
 bool CPlayBackMan::play_step_prev(unsigned int lPlayID)
 {
-    return true;
+    CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
+    if(!videoRecordMan)
+        return false;
+	return videoRecordMan->play_step_prev();
 }
 
 bool CPlayBackMan::play_start_time(unsigned int lPlayID,unsigned int start_time)
 {
+    CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
+    if(!videoRecordMan)
+        return false;
     return true;
 }
 
 bool CPlayBackMan::play_save_start(unsigned int lPlayID,const char* sSavePath)
 {
+    CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
+    if(!videoRecordMan)
+        return false;
     return true;
 }
 
 bool CPlayBackMan::play_save_stop(unsigned int lPlayID)
 {
+    CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
+    if(!videoRecordMan)
+        return false;
     return true;
 }
 
 bool CPlayBackMan::play_speed(unsigned int lPlayID,int speed)
 {
-    return true;
+    CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
+    if(!videoRecordMan)
+        return false;
+	return videoRecordMan->play_speed(speed);
 }
 
+bool CPlayBackMan::play_snap(unsigned int lPlayID,const char* sFilePath)
+{
+    CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
+    if(!videoRecordMan)
+        return false;
+    return videoRecordMan->play_snap(sFilePath);
+}
 bool CPlayBackMan::play_stop(unsigned int lPlayID)
 {
+    CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
+    if(!videoRecordMan)
+        return false;
     return true;
 }
 

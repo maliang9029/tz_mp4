@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="头文件\Classes">
+      <UniqueIdentifier>{8a4e5e69-e232-45fb-a51c-330ce76371a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Classes">
+      <UniqueIdentifier>{4d2334ef-1fcf-4bed-b8cc-71f0c45f422c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PlayBackMan.cpp">
@@ -22,6 +28,30 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="VideoRecordMan.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Mp4Muxer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="AutoFree.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Classes\MutexInteger.cpp">
+      <Filter>源文件\Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="Classes\VorxThread.cpp">
+      <Filter>源文件\Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="Classes\VorxTimer.cpp">
+      <Filter>源文件\Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="Classes\VorxTime.cpp">
+      <Filter>源文件\Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="Decoder.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ImgConvert.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,6 +71,33 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="VideoRecordMan.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Mp4Muxer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="AutoFree.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Classes\MacroDefine.h">
+      <Filter>头文件\Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Classes\MutexInteger.h">
+      <Filter>头文件\Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Classes\VorxThread.h">
+      <Filter>头文件\Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Classes\VorxTimer.h">
+      <Filter>头文件\Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Classes\VorxTime.h">
+      <Filter>头文件\Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Decoder.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImgConvert.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

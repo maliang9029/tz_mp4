@@ -1,5 +1,4 @@
 #pragma once
-#pragma warning (disable:4819)
 
 #ifndef _TZ_MP4_H_
 #define _TZ_MP4_H_
@@ -15,61 +14,117 @@ using namespace std;
 
 extern "C"
 {
-    /*åŠŸèƒ½è¯´æ˜Žï¼šåˆå§‹åŒ–æŽ¥å£
-     *å‚æ•°ï¼?     *[out]lPlayIDï¼šæ“ä½œå¥æŸ„ï¼ŒåŽé¢æŽ¥å£éƒ½é€šè¿‡æ”¹å¥æŸ„æ“ä½?     *[in]sFilePath:å½•åƒå­˜å‚¨è·¯å¾„
-     *[in]w:å›¾åƒå®?     *[in]h:å›¾åƒé«?     *[in]frameRate:è§†é¢‘å¸§çŽ‡
-     *[return] true æˆåŠŸ  false å¤±è´¥
-    */
-    TZ_MP4 bool  __stdcall  open_mp4(unsigned int &lPlayID,const char* sFilePath, unsigned int w,unsigned int h,unsigned int frameRate);
-    /*åŠŸèƒ½è¯´æ˜Žï¼šæ•°æ®å†™å…¥æŽ¥å?     *å‚æ•°ï¼?     *[in]lPlayIDï¼šæ“ä½œå¥æŸ?     *[in]sData:å½•åƒæ•°æ®
-     *[in]nDateLen:å½•åƒæ•°æ®é•¿åº¦
-     *[return] true æˆåŠŸ  false å¤±è´¥
-    */
-    TZ_MP4 bool __stdcall   write_frame(unsigned int lPlayID,const char* sData,unsigned int nDateLen);
-    /*åŠŸèƒ½è¯´æ˜Žï¼šèŽ·å–æ—¶é•¿æŽ¥å?     *å‚æ•°ï¼?     *[in]lPlayIDï¼šæ“ä½œå¥æŸ?     *[out]ts:æ€»æ—¶é•?     *[out]cur_ts:å½“å‰æ—¶é—´
-     *[return] true æˆåŠŸ  false å¤±è´¥
-    */
-    TZ_MP4 bool __stdcall   play_ts(unsigned int lPlayID,unsigned int &ts,unsigned int &cur_ts);
-    /*åŠŸèƒ½è¯´æ˜Žï¼šæ’­æ”¾æŽ¥å?     *å‚æ•°ï¼?     *[in]lPlayIDï¼šæ“ä½œå¥æŸ?     *[in]hWnd:å½•åƒæ’­æ”¾çª—å£å¥æŸ„
-     *[return] true æˆåŠŸ  false å¤±è´¥
-    */
-    TZ_MP4 bool __stdcall   play_start(unsigned int lPlayID,unsigned int hWnd);
-    /*åŠŸèƒ½è¯´æ˜Žï¼šæš‚åœæ’­æ”¾æŽ¥å?     *å‚æ•°ï¼?     *[in]lPlayIDï¼šæ“ä½œå¥æŸ?     *[return] true æˆåŠŸ  false å¤±è´¥
-    */
-    TZ_MP4 bool __stdcall   play_pause(unsigned int lPlayID);
-    /*åŠŸèƒ½è¯´æ˜Žï¼šç»§ç»­æ’­æ”¾æŽ¥å?     *å‚æ•°ï¼?     *[in]lPlayIDï¼šæ“ä½œå¥æŸ?     *[return] true æˆåŠŸ  false å¤±è´¥
-    */
-    TZ_MP4 bool __stdcall   play_resume(unsigned int lPlayID);
-    /*åŠŸèƒ½è¯´æ˜Žï¼šä¸‹ä¸€å¸§æ’­æ”¾æŽ¥å?     *å‚æ•°ï¼?     *[in]lPlayIDï¼šæ“ä½œå¥æŸ?     *[return] true æˆåŠŸ  false å¤±è´¥
-    */
-    TZ_MP4 bool __stdcall   play_step(unsigned int lPlayID);
-    /*åŠŸèƒ½è¯´æ˜Žï¼šä¸Šä¸€å¸§æ’­æ”¾æŽ¥å?     *å‚æ•°ï¼?     *[in]lPlayIDï¼šæ“ä½œå¥æŸ?     *[return] true æˆåŠŸ  false å¤±è´¥
-    */
-    TZ_MP4 bool __stdcall   play_step_prev(unsigned int lPlayID);
+	/*¹¦ÄÜËµÃ÷£º³õÊ¼»¯½Ó¿Ú
+	 *²ÎÊý£º
+	 *[out]lPlayID£º²Ù×÷¾ä±ú£¬ºóÃæ½Ó¿Ú¶¼Í¨¹ý¸Ä¾ä±ú²Ù×÷
+	 *[in]sFilePath:Â¼Ïñ´æ´¢Â·¾¶
+	 *[in]w:Í¼Ïñ¿í
+	 *[in]h:Í¼Ïñ¸ß
+	 *[in]frameRate:ÊÓÆµÖ¡ÂÊ
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool  __stdcall  open_mp4(unsigned int &lPlayID,const char* sFilePath, unsigned int w,unsigned int h,unsigned int frameRate);
+	/*¹¦ÄÜËµÃ÷£ºÊý¾ÝÐ´Èë½Ó¿Ú
+	 *²ÎÊý£º
+	 *[in]lPlayID£º²Ù×÷¾ä±ú
+	 *[in]sData:Â¼ÏñÊý¾Ý
+	 *[in]nDateLen:Â¼ÏñÊý¾Ý³¤¶È
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall   write_frame(unsigned int lPlayID,const char* sData,unsigned int nDateLen);
+	/*¹¦ÄÜËµÃ÷£º»ñÈ¡Ê±³¤½Ó¿Ú
+	 *²ÎÊý£º
+	 *[in]lPlayID£º²Ù×÷¾ä±ú
+	 *[out]ts:×ÜÊ±³¤
+	 *[out]cur_ts:µ±Ç°Ê±¼ä
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall   play_ts(unsigned int lPlayID,unsigned int &ts,unsigned int &cur_ts);
+	/*¹¦ÄÜËµÃ÷£º²¥·Å½Ó¿Ú
+	 *²ÎÊý£º
+	 *[in]lPlayID£º²Ù×÷¾ä±ú
+	 *[in]hWnd:Â¼Ïñ²¥·Å´°¿Ú¾ä±ú
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall   play_start(unsigned int lPlayID,unsigned int hWnd);
+	/*¹¦ÄÜËµÃ÷£ºÔÝÍ£²¥·Å½Ó¿Ú
+	 *²ÎÊý£º
+	 *[in]lPlayID£º²Ù×÷¾ä±ú
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall   play_pause(unsigned int lPlayID);
+	/*¹¦ÄÜËµÃ÷£º¼ÌÐø²¥·Å½Ó¿Ú
+	 *²ÎÊý£º
+	 *[in]lPlayID£º²Ù×÷¾ä±ú
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall   play_resume(unsigned int lPlayID);
+	/*¹¦ÄÜËµÃ÷£ºÏÂÒ»Ö¡²¥·Å½Ó¿Ú
+	 *²ÎÊý£º
+	 *[in]lPlayID£º²Ù×÷¾ä±ú
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall   play_step(unsigned int lPlayID);
+	/*¹¦ÄÜËµÃ÷£º¶¨Î»²¥·Å½Ó¿Ú
+	*²ÎÊý£º
+	*[in]lPlayID£º²Ù×÷¾ä±ú
+	*[in]ntime:¶¨Î»Ê±¼ä
+	*[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall	play_seek(unsigned int lPlayID,unsigned int ntime);
+	/*¹¦ÄÜËµÃ÷£ºÉÏÒ»Ö¡²¥·Å½Ó¿Ú
+	 *²ÎÊý£º
+	 *[in]lPlayID£º²Ù×÷¾ä±ú
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall   play_step_prev(unsigned int lPlayID);
 
-    /*åŠŸèƒ½è¯´æ˜Žï¼šå®šä½æ’­æ”¾æŽ¥å?     *å‚æ•°ï¼?     *[in]lPlayIDï¼šæ“ä½œå¥æŸ?     *[in]start_time:å®šä½æ—¶é—´
-     *[return] true æˆåŠŸ  false å¤±è´¥
+	/*¹¦ÄÜËµÃ÷£º¶¨Î»²¥·Å½Ó¿Ú
+	 *²ÎÊý£º
+	 *[in]lPlayID£º²Ù×÷¾ä±ú
+	 *[in]start_time:¶¨Î»Ê±¼ä
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall   play_start_time(unsigned int lPlayID,unsigned int start_time);
+	/*¹¦ÄÜËµÃ÷£º¿ªÊ¼Áí´æÎªÎÄ¼þ½Ó¿Ú
+	 *²ÎÊý£º
+	 *[in]lPlayID£º²Ù×÷¾ä±ú
+	 *[in]sSavePath:ÎÄ¼þÂ·¾¶
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall   play_save_start(unsigned int lPlayID,const char* sSavePath);
+	/*¹¦ÄÜËµÃ÷£º½áÊøÁí´æÎªÎÄ¼þ½Ó¿Ú
+	 *²ÎÊý£º
+	 *[in]lPlayID£º²Ù×÷¾ä±ú
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall   play_save_stop(unsigned int lPlayID);
+	/*¹¦ÄÜËµÃ÷£º±¶ËÙ²¥·Å½Ó¿Ú
+	 *²ÎÊý£º
+	 *[in]lPlayID£º²Ù×÷¾ä±ú
+	 *[in]speed:ËÙ¶È   -2Îª1/4±¶ËÙ  -1Îª1/2±¶ËÙ 0ÎªÕý³£  1Îª2±¶ËÙ 2Îª4±¶ËÙ
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall   play_speed(unsigned int lPlayID,int speed);
+    /*¹¦ÄÜËµÃ÷£º½ØÍ¼½Ó¿Ú
+    *²ÎÊý£º
+    *[in]lPlayID£º²Ù×÷¾ä±ú
+    *[in]sFilePath:Í¼Æ¬´æ·ÅÂ·¾¶
+    *[return] true ³É¹¦  false Ê§°Ü
     */
-    TZ_MP4 bool __stdcall   play_start_time(unsigned int lPlayID,unsigned int start_time);
-    /*åŠŸèƒ½è¯´æ˜Žï¼šå¼€å§‹å¦å­˜ä¸ºæ–‡ä»¶æŽ¥å£
-     *å‚æ•°ï¼?     *[in]lPlayIDï¼šæ“ä½œå¥æŸ?     *[in]sSavePath:æ–‡ä»¶è·¯å¾„
-     *[return] true æˆåŠŸ  false å¤±è´¥
-    */
-    TZ_MP4 bool __stdcall   play_save_start(unsigned int lPlayID,const char* sSavePath);
-    /*åŠŸèƒ½è¯´æ˜Žï¼šç»“æŸå¦å­˜ä¸ºæ–‡ä»¶æŽ¥å£
-     *å‚æ•°ï¼?     *[in]lPlayIDï¼šæ“ä½œå¥æŸ?     *[return] true æˆåŠŸ  false å¤±è´¥
-    */
-    TZ_MP4 bool __stdcall   play_save_stop(unsigned int lPlayID);
-    /*åŠŸèƒ½è¯´æ˜Žï¼šå€é€Ÿæ’­æ”¾æŽ¥å?     *å‚æ•°ï¼?     *[in]lPlayIDï¼šæ“ä½œå¥æŸ?     *[in]speed:é€Ÿåº¦
-     *[return] true æˆåŠŸ  false å¤±è´¥
-    */
-    TZ_MP4 bool __stdcall   play_speed(unsigned int lPlayID,int speed);
-    /*åŠŸèƒ½è¯´æ˜Žï¼šåœæ­¢æ’­æ”¾æŽ¥å?     *å‚æ•°ï¼?     *[in]lPlayIDï¼šæ“ä½œå¥æŸ?     *[return] true æˆåŠŸ  false å¤±è´¥
-    */
-    TZ_MP4 bool __stdcall   play_stop(unsigned int lPlayID);
-    /*åŠŸèƒ½è¯´æ˜Žï¼šååˆå§‹åŒ–æŽ¥å?     *å‚æ•°ï¼?     *[in]lPlayIDï¼šæ“ä½œå¥æŸ?     *[return] true æˆåŠŸ  false å¤±è´¥
-    */
-    TZ_MP4 bool __stdcall   close_mp4(unsigned int lPlayID);
+    TZ_MP4 bool __stdcall   play_snap(unsigned int lPlayID,const  char* sFilePath);
+	/*¹¦ÄÜËµÃ÷£ºÍ£Ö¹²¥·Å½Ó¿Ú
+	 *²ÎÊý£º
+	 *[in]lPlayID£º²Ù×÷¾ä±ú
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall   play_stop(unsigned int lPlayID);
+	/*¹¦ÄÜËµÃ÷£º·´³õÊ¼»¯½Ó¿Ú
+	 *²ÎÊý£º
+	 *[in]lPlayID£º²Ù×÷¾ä±ú
+	 *[return] true ³É¹¦  false Ê§°Ü
+	*/
+	TZ_MP4 bool __stdcall   close_mp4(unsigned int lPlayID);
 };
 #endif
 #endif

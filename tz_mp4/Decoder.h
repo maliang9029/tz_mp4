@@ -45,7 +45,7 @@ public:
     bool PreSingleFrame();
     bool play_speed(int speed);
 	bool play_seek(unsigned int ntime);
-    
+
     void SetVideoCallBack(ON_VEDIO_DATA pCallBack,void* lUserData);
 	IDirect3D9 *m_pDirect3D9;
 	IDirect3DDevice9 *m_pDirect3DDevice;
@@ -75,19 +75,19 @@ private:
 private:
 	AVFormatContext	*m_pFormatCtx;
 	AVCodecContext	*m_pCodecCtx;
-	
+
 	AVFrame	*m_pFrame;
     int64_t  m_lastDts;
     int64_t  m_lastPts;
     int64_t  m_seekTime;
-	
+
 
 	AVFilterContext *m_pBuffersink_ctx;
 	AVFilterContext *m_pBuffersrc_ctx;
 	AVFilterGraph *m_pFilter_graph;
 
-	
-	CTzThread m_hThread;
+
+	CVorxThread m_hThread;
 	int m_videoindex;
 	int m_audioindex;
 	HWND m_hWnd;

@@ -36,6 +36,7 @@ public:
 
     bool play_step(unsigned int lPlayID);
 
+	bool play_seek(unsigned int lPlayID,unsigned int ntime);
     bool play_step_prev(unsigned int lPlayID);
 
     bool play_ts(unsigned int lPlayID,unsigned int &ts,unsigned int &cur_ts);
@@ -48,6 +49,7 @@ public:
 
     bool play_speed(unsigned int lPlayID,int speed);
 
+    bool play_snap(unsigned int lPlayID,const char* sFilePath);
     bool play_stop(unsigned int lPlayID);
 
     bool close_mp4(unsigned int lPlayID);

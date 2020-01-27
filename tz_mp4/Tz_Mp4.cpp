@@ -50,6 +50,14 @@ TZ_MP4 bool __stdcall play_step(unsigned int lPlayID)
 	return pPlayBackMan->play_step(lPlayID);
 }
 
+TZ_MP4 bool __stdcall play_seek(unsigned int lPlayID,unsigned int ntime)
+{
+	CPlayBackMan* pPlayBackMan = CPlayBackMan::GetInstance();
+	if (!pPlayBackMan)
+		return false;
+	return pPlayBackMan->play_seek(lPlayID,ntime);
+}
+
 TZ_MP4 bool __stdcall play_step_prev(unsigned int lPlayID)
 {
     CPlayBackMan* pPlayBackMan = CPlayBackMan::GetInstance();
@@ -96,6 +104,14 @@ TZ_MP4 bool __stdcall play_speed(unsigned int lPlayID,int speed)
 	if (!pPlayBackMan)
 		return false;
 	return pPlayBackMan->play_speed(lPlayID,speed);
+}
+
+TZ_MP4 bool __stdcall play_snap(unsigned int lPlayID,const char* sFilePath)
+{
+	CPlayBackMan* pPlayBackMan = CPlayBackMan::GetInstance();
+    if (!pPlayBackMan)
+        return false;
+    return pPlayBackMan->play_snap(lPlayID,sFilePath);
 }
 
 TZ_MP4 bool __stdcall play_stop(unsigned int lPlayID)
