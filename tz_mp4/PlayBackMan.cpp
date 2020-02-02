@@ -90,7 +90,7 @@ bool CPlayBackMan::play_ts(unsigned int lPlayID,unsigned int &ts,unsigned int &c
     CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
     if(!videoRecordMan)
         return false;
-    return true;
+    return videoRecordMan->play_ts(ts,cur_ts);
 }
 
 bool CPlayBackMan::play_start(unsigned int lPlayID,unsigned int hWnd)
@@ -154,7 +154,7 @@ bool CPlayBackMan::play_save_start(unsigned int lPlayID,const char* sSavePath)
     CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
     if(!videoRecordMan)
         return false;
-    return true;
+    return videoRecordMan->play_save_start(sSavePath);
 }
 
 bool CPlayBackMan::play_save_stop(unsigned int lPlayID)
@@ -162,7 +162,7 @@ bool CPlayBackMan::play_save_stop(unsigned int lPlayID)
     CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
     if(!videoRecordMan)
         return false;
-    return true;
+    return videoRecordMan->play_save_stop();
 }
 
 bool CPlayBackMan::play_speed(unsigned int lPlayID,int speed)
@@ -185,7 +185,7 @@ bool CPlayBackMan::play_stop(unsigned int lPlayID)
     CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
     if(!videoRecordMan)
         return false;
-    return true;
+    return videoRecordMan->play_stop();
 }
 
 bool CPlayBackMan::close_mp4(unsigned int lPlayID)

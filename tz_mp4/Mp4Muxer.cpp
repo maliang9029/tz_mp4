@@ -4,11 +4,12 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#define SEPARATOR_CHAR "?"
 
-static int64_t pkt_time_stamp = 0;
-static AVRational in_time_base;
-static AVRational mux_timebase;
-static AVRational TIME_BASE;
+int64_t pkt_time_stamp = 0;
+AVRational in_time_base = AVRational{1, 1200000};
+AVRational mux_timebase = in_time_base;
+AVRational TIME_BASE = AVRational{1, AV_TIME_BASE};
 
 static int hevc_probe(char *buf, int buf_size)
 {
@@ -321,29 +322,28 @@ CMp4Muxer::CMp4Muxer(string path, int playid, int w, int h, int r)
     width = w;
     height = h;
     framerate = (r > 0 ? r : 25);
-    record_timing = DEFAULT_RECOED_TIMING;
+    delay_time = DEFAULT_DELAY_TIME;
     thread.SetParam(thread_muxing, this, 500, NULL);
     string fullpath = path;
     const char *tmp = fullpath.c_str();
     if (strcmp(tmp+fullpath.length()-1,"\\") != 0) {
         fullpath += "\\";
     }
-    index_filename = fullpath + to_string(playid) + "_record_file.list";
-    index_all_filename = fullpath + to_string(playid) + "_all_record_file.list";
+	char sPlayid[25]={0};
+    int radix = 10;
+    _itoa_s(playid, sPlayid, sizeof(sPlayid) - 1, radix);
+    index_filename = fullpath + string(sPlayid) + "_record_period.list";
+    index_all_filename = fullpath + string(sPlayid) + "_record_history.list";
     is_muxing_start = false;
     next_dts = AV_NOPTS_VALUE;
     dts = AV_NOPTS_VALUE;
     next_pts = AV_NOPTS_VALUE;
     pts = AV_NOPTS_VALUE;
-    in_time_base.num = 1;
-    in_time_base.den = 1200000;
-    mux_timebase = in_time_base;
-    TIME_BASE.num = 1;
-    TIME_BASE.den = AV_TIME_BASE;
+    current_dts = 0;
     printf("path:%s, index_filename:%s, index_all_filename:%s\n", path.c_str(), index_filename.c_str(), index_all_filename.c_str());
 }
 
-bool CMp4Muxer::init_muxing(int fragment, int record_period, int file_period)
+bool CMp4Muxer::init_muxing(int file_len, int record_period_len, int record_history_len)
 {
     const AVCodec *codec;
     codec = avcodec_find_decoder(AV_CODEC_ID_HEVC);
@@ -359,20 +359,20 @@ bool CMp4Muxer::init_muxing(int fragment, int record_period, int file_period)
         return false;
     }
 
-    max_fragment = (fragment > 0 ? fragment : DEFAULT_MAX_FRAGMENT);
-    int _record_period = (record_period > 0 ? record_period : DEFAULT_RECORD_PERIOD);
-    int _file_period = (file_period > 0 ? file_period : DEFAULT_FILE_PERIOD);
-    double tmp = _record_period / (double)max_fragment;
-    record_window = (int)ceil(tmp);
-    tmp = _file_period / (double)max_fragment;
-    remove_window = (int)ceil(tmp);
+    max_file_length = (file_len > 0 ? file_len : DEFAULT_MAX_FILE_LENGTH);
+    int _record_period = (record_period_len > 0 ? record_period_len : DEFAULT_RECORD_PERIOD_TIME);
+    int _file_period = (record_history_len > 0 ? record_history_len : DEFAULT_RECORD_HISTORY_TIME);
+    double tmp = _record_period / (double)max_file_length;
+    record_period_window = (int)ceil(tmp);
+    tmp = _file_period / (double)max_file_length;
+    record_history_window = (int)ceil(tmp);
 
     if (create_multi_directory() != true) {
         return false;
     }
 
-    init_segments();
-    init_segments_ori();
+    init_segments_period();
+    init_segments_history();
 
     if (segment_open() != MP4_SUCCESS) {
         return false;
@@ -395,12 +395,12 @@ CMp4Muxer::~CMp4Muxer()
     }
 #if 0
     vector<CMp4Segment*>::iterator it;
-    for (it = segments_ori.begin(); it != segments_ori.end(); ++it) {
+    for (it = segments_history.begin(); it != segments_history.end(); ++it) {
         CMp4Segment* segment = *it;
         safe_freep(segment);
     }
-    segments.clear();
-    segments_ori.clear();
+    segments_period.clear();
+    segments_history.clear();
  #endif
 }
 
@@ -489,10 +489,10 @@ bool CMp4Muxer::parse_packet(const char* data, unsigned int len)
     return true;
 }
 
-void CMp4Muxer::set_record_timing(int64_t timing)
+void CMp4Muxer::set_delay_time(int64_t delay)
 {
-    if (timing >= 10 * 1000 ) {
-        record_timing = timing;
+    if (delay >= DEFAULT_DELAY_TIME) {
+        delay_time = delay;
     }
 }
 
@@ -612,7 +612,7 @@ int CMp4Muxer::segment_open()
     tm.ToString(stime,sizeof(stime),false);
     char tmp[128];
     memset(tmp, 0, sizeof(tmp));
-    snprintf(tmp, sizeof(tmp), "%0.3d_%s", playid, stime);
+    _snprintf_s(tmp, sizeof(tmp) - 1, "%0.3d_%s", playid, stime);
     file_name = tmp;
     file_name += ".mp4";
     current = new CMp4Segment(path, file_name, width, height, framerate);
@@ -639,7 +639,7 @@ int CMp4Muxer::reap_segment()
     return ret;
 }
 
-int CMp4Muxer::segment_shrink()
+int CMp4Muxer::segment_shrink(bool is_close)
 {
     int ret = MP4_SUCCESS;
     if (!current) {
@@ -649,25 +649,29 @@ int CMp4Muxer::segment_shrink()
     if (filename == "") {
         return MP4_ERROR;
     }
-    vector<string> _segments;
-    vector<string> _segments_ori;
-    // the segments to remove
-    vector<string> segment_to_remove;
+    refresh_period_list(filename);
+    refresh_history_list(filename);
+    return ret;
+}
 
-    //update segments
+int CMp4Muxer::refresh_period_list(string filename)
+{
+    int ret = MP4_SUCCESS;
+    vector<string> _segments_period;
+    //update segments_period
     {
-        CAutoMutex lock(&mutex_seg);
-        if (segments.empty() || segments.back() != filename) {
-            segments.push_back(filename);
-            // shrink the segments.
-            int record_index = (int)segments.size() - record_window;
-            for (int i = 0; i < record_index && !segments.empty(); i++) {
-                segments.erase(segments.begin());
+        CAutoMutex lock(&mutex_period);
+        if (segments_period.empty() || segments_period.back() != filename) {
+            segments_period.push_back(filename);
+            // shrink the segments_period.
+            int record_index = (int)segments_period.size() - record_period_window;
+            for (int i = 0; i < record_index && !segments_period.empty(); i++) {
+                segments_period.erase(segments_period.begin());
             }
-            _segments.assign(segments.begin(), segments.end());
+            _segments_period.assign(segments_period.begin(), segments_period.end());
         }
     }
-    if (!_segments.empty()) {
+    if (!_segments_period.empty()) {
 
         //write index file
         ofstream ofs;
@@ -678,33 +682,43 @@ int CMp4Muxer::segment_shrink()
             return MP4_ERROR;
         }
         vector<string>::iterator it;
-        for (it = _segments.begin(); it != _segments.end(); it++) {
+        for (it = _segments_period.begin(); it != _segments_period.end(); it++) {
             string mp4_file = *it;
             ofs << mp4_file.c_str() << endl;
         }
         ofs.close();
     }
+    return ret;
+}
 
-    //update segments_ori
+int CMp4Muxer::refresh_history_list(string filename)
+{
+    int ret = MP4_SUCCESS;
+    map<string, int> _segments_history;
+    map<string, int>::iterator it;
+    // the segments_period to remove
+    vector<string> segment_to_remove;
+    int len = current->get_duration() / 1000;//second
+    //update segments_history
     {
-        CAutoMutex lock(&mutex_seg_ori);
-        if (segments_ori.empty() || segments_ori.back() != filename) {
-            segments_ori.push_back(filename);
-            int remove_index = (int)segments_ori.size() - remove_window;
-            for (int i = 0; i < remove_index && !segments_ori.empty(); i++) {
-                string mp4_file = *segments_ori.begin();
-                segments_ori.erase(segments_ori.begin());
+        CAutoMutex lock(&mutex_history);
+        segments_history[filename] = len;
+        if (!segments_history.empty()) {
+            int remove_index = (int)segments_history.size() - record_history_window;
+            for (int i = 0; i < remove_index && !segments_history.empty(); i++) {
+                string mp4_file = segments_history.begin()->first;
+                segments_history.erase(segments_history.begin());
                 segment_to_remove.push_back(mp4_file);
             }
-            _segments_ori.assign(segments_ori.begin(), segments_ori.end());
+            _segments_history = segments_history;
         }
     }
-    if (!_segments_ori.empty()) {
+    if (!_segments_history.empty()) {
         // remove the mp4 file.
         for (int i = 0; i < (int)segment_to_remove.size(); i++) {
             string mp4_file = segment_to_remove[i];
             if (remove(mp4_file.c_str()) != 0) {
-
+                printf("remove %s error\n", mp4_file.c_str());
             }
         }
         segment_to_remove.clear();
@@ -717,22 +731,21 @@ int CMp4Muxer::segment_shrink()
         if (!ofs.is_open()) {
             return MP4_ERROR;
         }
-        vector<string>::iterator it;
-        for (it = _segments_ori.begin(); it != _segments_ori.end(); it++) {
-            string mp4_file = *it;
-            ofs << mp4_file.c_str() << endl;
+
+        for (it = _segments_history.begin(); it != _segments_history.end(); it++) {
+            string mp4_file = it->first;
+            int len = it->second;
+            char size[256];
+            memset(size, 0, sizeof(size));
+            _itoa_s(len, size, sizeof(size) - 1, 10);
+            string ss = mp4_file + SEPARATOR_CHAR + (string)size;
+            ofs << ss.c_str() << endl;
         }
         ofs.close();
     }
-
     return ret;
 }
 
-int CMp4Muxer::refresh_file_list()
-{
-    int ret = MP4_SUCCESS;
-    return ret;
-}
 
 int CMp4Muxer::mp4_muxing(CMessage* msg)
 {
@@ -741,23 +754,24 @@ int CMp4Muxer::mp4_muxing(CMessage* msg)
         return MP4_ERROR;
     }
     int64_t duration = current->get_duration();
-    if (duration >= max_fragment && msg->pkt->flags == AV_PKT_FLAG_KEY) {
+    if (duration >= max_file_length && msg->pkt->flags == AV_PKT_FLAG_KEY) {
         ret = reap_segment();
     }
     if (ret != MP4_SUCCESS) {
         return ret;
     }
+    current_dts = msg->pkt->dts;
     current->ffmpeg_muxing(msg);
     duration = current->get_duration();
-    if (duration >= record_timing) {
+    if (duration >= delay_time) {
         segment_shrink();
     }
     return ret;
 }
 
-void CMp4Muxer::init_segments()
+void CMp4Muxer::init_segments_period()
 {
-    CAutoMutex lock(&mutex_seg);
+    CAutoMutex lock(&mutex_period);
     ifstream ifs;
     ifs.open(index_filename.c_str(), ios::in);
     if (!ifs.is_open()) {
@@ -765,13 +779,13 @@ void CMp4Muxer::init_segments()
     }
     string line;
     while (getline(ifs, line)) {
-        segments.push_back(line);
+        segments_period.push_back(line);
     }
 }
 
-void CMp4Muxer::init_segments_ori()
+void CMp4Muxer::init_segments_history()
 {
-    CAutoMutex lock(&mutex_seg_ori);
+    CAutoMutex lock(&mutex_history);
     ifstream ifs;
     ifs.open(index_all_filename.c_str(), ios::in);
     if (!ifs.is_open()) {
@@ -779,8 +793,34 @@ void CMp4Muxer::init_segments_ori()
     }
     string line;
     while (getline(ifs, line)) {
-        segments_ori.push_back(line);
+        string::size_type pos;
+        string filename;
+        int len;
+        if ((pos = line.find(SEPARATOR_CHAR)) != string::npos) {
+            filename = line.substr(0, pos);
+            string size = line.substr(pos + 1);
+            len = atoi(size.c_str());
+            segments_history[filename] = len;
+        }
     }
 }
 
+int64_t CMp4Muxer::get_current_dts()
+{
+    return current_dts;
+}
+
+void CMp4Muxer::get_record_list(vector<string> &vec)
+{
+    CAutoMutex lock(&mutex_period);
+    vec.assign(segments_period.begin(), segments_period.end());
+    return;
+}
+
+void CMp4Muxer::get_record_history(map<string, int> &history)
+{
+    CAutoMutex lock(&mutex_history);
+    history = segments_history;
+    return;
+}
 

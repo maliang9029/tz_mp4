@@ -169,6 +169,7 @@
     <ClCompile Include="ImgConvert.cpp" />
     <ClCompile Include="Mp4Muxer.cpp" />
     <ClCompile Include="PlayBackMan.cpp" />
+    <ClCompile Include="SaveAsFile.cpp" />
     <ClCompile Include="Tz_Mp4.cpp" />
     <ClCompile Include="VideoRecordMan.cpp" />
   </ItemGroup>
@@ -187,6 +188,7 @@
     <ClInclude Include="ImgConvert.h" />
     <ClInclude Include="Mp4Muxer.h" />
     <ClInclude Include="PlayBackMan.h" />
+    <ClInclude Include="SaveAsFile.h" />
     <ClInclude Include="Tz_Mp4.h" />
     <ClInclude Include="VideoRecordMan.h" />
   </ItemGroup>

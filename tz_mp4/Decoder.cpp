@@ -7,10 +7,87 @@
 #include <mmsystem.h>
 #pragma comment(lib,"winmm.lib")
 
+CRecordInfo::CRecordInfo()
+{
+    file_name = "";
+    pos = 0;
+}
+
+
+CRecordInfo::~CRecordInfo()
+{
+}
+
+CRecordInfo::CRecordInfo(const CRecordInfo & c)
+{
+    file_name = c.file_name;
+    if (!c.keyframe_positions.empty()) {
+        keyframe_positions = c.keyframe_positions;
+    }
+}
+
+int64_t CRecordInfo::get_last_keyframe_dts(int64_t pos)
+{
+    int64_t keyframe_dts = FIND_KEYFRAME_ERROR_NO_FOUND;
+    if (!keyframe_positions.empty()) {
+        map<int64_t, int64_t>::iterator it = keyframe_positions.begin();
+        if (it->first >= pos) {
+            keyframe_dts = FIND_KEYFRAME_ERROR_LAST_FILE;
+            return keyframe_dts;
+        }
+        it = keyframe_positions.end();
+        it--;
+        if (it->first < pos) {
+            return it->second;
+        }
+        int64_t tmp = -1;
+        for (it = keyframe_positions.begin(); it != keyframe_positions.end(); it++) {
+            tmp = it->first;
+            if (tmp >= pos) {
+                it--;
+                keyframe_dts = it->second;
+                break;
+            }
+        }
+    }
+    return keyframe_dts;
+}
+
+void CRecordInfo::add_keyframe(int64_t pos, int64_t dts)
+{
+    keyframe_positions[pos] = dts;
+}
+
+void CRecordInfo::set_file_name(string filename)
+{
+    file_name = filename;
+}
+string CRecordInfo::get_file_name()
+{
+    return file_name;
+}
+
+void CRecordInfo::clear()
+{
+    file_name = "";
+    keyframe_positions.clear();
+    pos = 0;
+}
+
+void CRecordInfo::set_pos(int64_t pos)
+{
+    this->pos = pos;
+}
+int64_t CRecordInfo::get_pos()
+{
+    return pos;
+}
+
 CDecoder::CDecoder(void)
 :m_nFrameRate(25)
 ,m_curPts(0)
 ,m_bPause(false)
+,m_bCapTure(false)
 ,m_nPlaySpeed(1.0)
 ,m_pDirect3D9(NULL)
 ,m_pDirect3DDevice(NULL)
@@ -18,14 +95,20 @@ CDecoder::CDecoder(void)
 ,m_lRet(0)
 ,m_screen_h(0)
 ,m_screen_w(0)
-,m_bCapTure(false)
 ,m_pOnVideoDataCallBack(NULL)
 ,m_pOnVideoDataParam(NULL)
 ,m_pimgConvert(NULL)
 ,m_lastDts(0)
 ,m_lastPts(0)
+,m_seekTime(0)
+,m_pFormatCtx(NULL)
+,m_pCodecCtx(NULL)
+,m_videoindex(0)
+,m_bSaveVideo(false)
+,m_pSaveFile(NULL)
+,m_bKey(false)
 {
-	
+
 }
 
 CDecoder::~CDecoder(void)
@@ -49,12 +132,12 @@ void CDecoder::DisPlayFrame(AVFrame* frame)
     }
     memcpy(&m_snapPic,&tempPic,sizeof(VPicture));
     //pThis->m_pOnVideoDataCallBack(pThis->m_screen_w, pThis->m_screen_h, &tempPic, pThis->m_pOnVideoDataParam);
-   // m_curPts = av_q2d(m_pCodecCtx->time_base)*pPacket->dts*100;
+   // m_curPts = av_q2d(m_pCodecCtx->time_base)*pkt->dts*100;
 
     int y_size=m_pCodecCtx->width*m_pCodecCtx->height;
 #if OUTPUT_YUV420P
-    y_size=m_pCodecCtx->width*m_pCodecCtx->height;  
-    fwrite(m_pFrameYUV->data[0],1,y_size,fp_yuv);    //Y 
+    y_size=m_pCodecCtx->width*m_pCodecCtx->height;
+    fwrite(m_pFrameYUV->data[0],1,y_size,fp_yuv);    //Y
     fwrite(m_pFrameYUV->data[1],1,y_size/4,fp_yuv);  //U
     fwrite(m_pFrameYUV->data[2],1,y_size/4,fp_yuv);  //V
 #endif
@@ -74,6 +157,7 @@ void CDecoder::DisPlayFrame(AVFrame* frame)
     if(FAILED(m_lRet))
 	    return ;
     byte* pData = new byte[y_size*12/8];
+    AutoFreeA(byte, pData);
     memset(pData,0,y_size);
     byte* pDest = (BYTE *)d3d_rect.pBits;
     int stride = d3d_rect.Pitch;
@@ -95,7 +179,7 @@ void CDecoder::DisPlayFrame(AVFrame* frame)
 
     for(int i = 0;i < m_screen_h;i ++){
 	    memcpy(pDest + i * stride,pData + i * m_screen_w, m_screen_w);
-    }					
+    }
     for(int i = 0;i < m_screen_h/2;i ++){
 	    memcpy(pDest + stride * m_screen_h + stride * m_screen_h / 4 + i * stride / 2,
 		    pData + m_screen_w * m_screen_h + i * m_screen_w / 2, m_screen_w / 2);
@@ -123,12 +207,6 @@ void CDecoder::DisPlayFrame(AVFrame* frame)
     m_pDirect3DDevice->EndScene();
     m_pDirect3DDevice->Present( NULL, NULL, NULL, NULL );
     pBackBuffer->Release();
-    if(pData)
-    {
-        delete[] pData;
-        pData = NULL;
-    }
-
 }
 
 int CDecoder::thread_fun(LPVOID lParam)
@@ -136,59 +214,7 @@ int CDecoder::thread_fun(LPVOID lParam)
 	CDecoder* pThis = (CDecoder*)lParam;
 	if(pThis)
 	{
-		
-		int got_picture = 0;
-		int ret = 0;
-		AVPacket* pPacket=(AVPacket *)av_malloc(sizeof(AVPacket));
-		av_init_packet(pPacket);
-	    AVFrame *filt_frame =  av_frame_alloc();
-		if(pThis->m_bPause)
-		{
-          //  return -1;
-		}
-		else if (av_read_frame(pThis->m_pFormatCtx,pPacket)>=0)
-		{
-            
-			if(pPacket->stream_index == pThis->m_videoindex)
-			{
-				
-				
-				ret = avcodec_decode_video2(pThis->m_pCodecCtx,pThis->m_pFrame,&got_picture,pPacket);
-				if(ret < 0)
-				{
-				
-				}
-				if(got_picture)
-				{
-                   pThis->m_pFrame->pts = pThis->m_pFrame->best_effort_timestamp;
-                   
-
-                   pThis->DisPlayFrame(pThis->m_pFrame);
-                  // av_frame_unref(filt_frame);
-					//Sleep(20/(DWORD)pThis->m_nPlayRate);
-                    /*int nRate = (1000/pThis->m_nFrameRate)*pThis->m_nPlaySpeed;
-					Sleep(1000/pThis->m_nFrameRate);*/
-                   int64_t diff = pPacket->dts*2 - pThis->m_lastDts;                   
-                   int64_t duration = diff * 1000 /(pThis->m_pFormatCtx->streams[pThis->m_videoindex]->time_base.den
-                       /pThis->m_pFormatCtx->streams[pThis->m_videoindex]->time_base.num);
-                   if(duration > DelayTime && duration < 1000)
-                   {
-                       int nSleep = (duration -DelayTime)*pThis->m_nPlaySpeed;
-                       Sleep(duration );
-                   }
-                   pThis->m_lastDts = pPacket->dts;
-                   
-                   if(pThis->m_seekTime > 0)
-                   {
-                       pThis->seek(pThis->m_seekTime,0);
-                       pThis->m_seekTime = -1;
-                   }
-                   got_picture = 0;
-				}
-			}
-			av_free_packet(pPacket);
-		}
-				
+        return pThis->play();
 	}
 	return 0;
 }
@@ -209,7 +235,7 @@ int CDecoder::initFilter(const char* filters_descr)
 //	m_pFilter_graph = avfilter_graph_alloc();
 //
 //	/* buffer video source: the decoded frames from the decoder will be inserted here. */
-//	
+//
 //	sprintf(sreg, /*sizeof(sreg),*/
 //		"video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
 //		m_pCodecCtx->width, m_pCodecCtx->height, m_pCodecCtx->pix_fmt,
@@ -314,7 +340,7 @@ int CDecoder::InitD3D( HWND hwnd, unsigned long lWidth, unsigned long lHeight )
 	if( m_pDirect3D9 == NULL )
 		return -1;
 
-	D3DPRESENT_PARAMETERS d3dpp; 
+	D3DPRESENT_PARAMETERS d3dpp;
 	ZeroMemory( &d3dpp, sizeof(d3dpp) );
 	d3dpp.Windowed = TRUE;
 	d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
@@ -351,27 +377,25 @@ int CDecoder::InitD3D( HWND hwnd, unsigned long lWidth, unsigned long lHeight )
 
 bool CDecoder::play_pause()
 {
-	m_bPause = true;
-	int got_picture = 0;
-	AVPacket* m_pPacket=(AVPacket *)av_malloc(sizeof(AVPacket));
-	av_init_packet(m_pPacket);
+	m_hThread.Suspend();
     return true;
 }
 
 bool CDecoder::play_resume()
 {
-    m_bPause = false;
+    m_hThread.Resume();
     return true;
 }
 
 bool CDecoder::init(const char* sFilePath,HWND hWnd)
 {
+    current_file.set_file_name(sFilePath);
 	m_hWnd = hWnd;
 	FILE *fp_yuv=NULL;
 	int y_size=0;
 	unsigned char *out_buffer=NULL;
 	struct SwsContext *img_convert_ctx=NULL;
-	
+
 	av_register_all();
 	avformat_network_init();
 	m_pFormatCtx = avformat_alloc_context();
@@ -383,19 +407,19 @@ bool CDecoder::init(const char* sFilePath,HWND hWnd)
 		printf("Couldn't find stream information.\n");
 		return false;
 	}
-	
+
 	m_videoindex = -1;
 	m_nFrameRate = 25;
-	for(int i=0; i<(int)m_pFormatCtx->nb_streams; i++) 
+	for(int i=0; i<(int)m_pFormatCtx->nb_streams; i++)
 	{
 		if(m_pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
 		{
 			m_videoindex=i;
 			m_nFrameRate = m_pFormatCtx->streams[i]->avg_frame_rate.num / m_pFormatCtx->streams[i]->avg_frame_rate.den;
 		}
-		
+
 	}
-	
+
 	if(m_videoindex==-1)
 	{
 		printf("Didn't find a video stream.\n");
@@ -406,7 +430,7 @@ bool CDecoder::init(const char* sFilePath,HWND hWnd)
     aa.num =1;
     aa.den = 1000000;
     double times = av_q2d(aa)*m_pFormatCtx->duration;
-	
+
 	AVCodec *m_pCodec=avcodec_find_decoder(m_pCodecCtx->codec_id);
 	if(avcodec_open2(m_pCodecCtx, m_pCodec,NULL)<0){
 		printf("Could not open video codec.\n");
@@ -415,10 +439,10 @@ bool CDecoder::init(const char* sFilePath,HWND hWnd)
     int bit_rate = m_pCodecCtx->bit_rate;
 
 	m_pFrame = av_frame_alloc();
-	
+
 	m_pFrame->data[0] = 0;
 	m_pFrame->linesize[0] = 0;
-	
+
 	m_screen_w = m_pCodecCtx->width;
 	m_screen_h = m_pCodecCtx->height;
    /* m_pD3DRender = D3D_VIDEO_RENDER::D3D_Video_Render_Create();
@@ -436,9 +460,9 @@ bool CDecoder::init(const char* sFilePath,HWND hWnd)
 	InitD3D(m_hWnd,m_screen_w,m_screen_h);
     const char *filter_descr = "scale=78:24,transpose=cclock";
     initFilter(filter_descr);
-#if OUTPUT_YUV420P 
-	fp_yuv=fopen("output.yuv","wb+");  
-#endif 	
+#if OUTPUT_YUV420P
+	fp_yuv=fopen("output.yuv","wb+");
+#endif
 
  	m_hThread.SetParam(thread_fun,this,0);
  	m_hThread.Start();
@@ -454,7 +478,7 @@ bool CDecoder::CreateImgConvert(int pix_fmt, int width, int height)
         m_pimgConvert = NULL;
     }
     m_pimgConvert = new CImgConvert;
-    
+
 
     if(!m_pimgConvert->InitConvert(pix_fmt, width, height))
     {
@@ -484,17 +508,24 @@ void CDecoder::stopdecoder()
 	{
 		av_free(m_pFrame);
 		m_pFrame = NULL;
-	}	
+	}
 	if (m_pCodecCtx != NULL)
 	{
 		avcodec_close(m_pCodecCtx);
 		av_free(m_pCodecCtx);
 		m_pCodecCtx = NULL;
 	}
+	if(m_pSaveFile)
+	{
+		delete m_pSaveFile;
+		m_pSaveFile = NULL;
+	}
 	/*if (m_pFormatCtx != NULL)
 	{
 		avformat_free_context(m_pFormatCtx);
 	}*/
+	Cleanup();
+	DestroyImgConvert();
 }
 
 bool CDecoder::play_speed(int speed)
@@ -518,14 +549,71 @@ bool CDecoder::play_speed(int speed)
         break;
     default:
         m_nPlaySpeed = 1.0;
-    }    
+    }
     return true;
 }
 
-void CDecoder::play()
+int CDecoder::play()
 {
-	m_bPause = false;
-	m_nPlaySpeed = 1.0;
+    int got_picture = 0;
+    int ret = 0;
+    AVPacket* pkt = av_packet_alloc();
+    //AVFrame *filt_frame = av_frame_alloc();
+    ret = av_read_frame(m_pFormatCtx, pkt);
+    if (ret == 0) {
+        if (pkt->stream_index == m_videoindex) {
+            printf("packet dts:%lld,pts:%lld,pos:%lld\n", pkt->dts, pkt->pts, pkt->pos);
+            ret = avcodec_decode_video2(m_pCodecCtx, m_pFrame, &got_picture, pkt);
+			if(m_pFrame->key_frame) {
+				m_bKey = true;
+			}
+			if(m_bSaveVideo && m_pSaveFile && m_bKey) {
+				m_pSaveFile->write_packet(pkt);
+			}
+            if (ret < 0) {
+                //decode error
+                //TODO:exit?
+                printf("file: %s decode error:%d\n", current_file.get_file_name().c_str(), ret);
+                goto FAIL;
+            }
+            current_file.set_pos(pkt->pos);
+            if (pkt->flags == AV_PKT_FLAG_KEY) {
+                current_file.add_keyframe(pkt->pos, pkt->dts);
+            }
+            if (got_picture) {
+                m_pFrame->pts = m_pFrame->best_effort_timestamp;
+                printf("frame pts:%lld,pkt_pts:%lld,pkt_dts:%lld, pkt_pos:%lld\n",
+                    m_pFrame->pts, m_pFrame->pkt_pts, m_pFrame->pkt_dts, m_pFrame->pkt_pos);
+
+                DisPlayFrame(m_pFrame);
+                // av_frame_unref(filt_frame);
+                  //Sleep(20/(DWORD)pThis->m_nPlayRate);
+                  /*int nRate = (1000/pThis->m_nFrameRate)*pThis->m_nPlaySpeed;
+                  Sleep(1000/pThis->m_nFrameRate);*/
+                int64_t diff = pkt->dts * 2 - m_lastDts;
+                int64_t duration = diff * 1000 / (m_pFormatCtx->streams[m_videoindex]->time_base.den
+                    / m_pFormatCtx->streams[m_videoindex]->time_base.num);
+                if (duration > DelayTime && duration < 1000) {
+                    int nSleep = (duration - DelayTime)*m_nPlaySpeed;
+                    Sleep(40);
+                }
+                m_lastDts = pkt->dts;
+
+                if (m_seekTime > 0) {
+                    seek(m_seekTime, 0);
+                    m_seekTime = -1;
+                }
+                got_picture = 0;
+            }
+        }
+    } else if (ret == AVERROR_EOF){
+        //read next file
+    } else {
+        //error
+    }
+FAIL:
+    av_packet_free(&pkt);
+    return 0;
 }
 
 bool CDecoder::snapshot(const char* sFilePath)
@@ -542,9 +630,9 @@ bool CDecoder::snapshot(const char* sFilePath)
         memset(fullFileName, 0, MAX_PATH);
         memset(date, 0, 50);
         memset(fileName, 0, 50);
-        SYSTEMTIME time; 
+        SYSTEMTIME time;
         GetLocalTime(&time);
-        
+
         sprintf(fileName, "\\%04d_%02d_%02d_%02d_%02d_%02d.bmp", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
         strcat(fullFileName,sFilePath);
         strcat(fullFileName,fileName);
@@ -573,7 +661,7 @@ bool CDecoder::snapshot(const char* sFilePath)
 }
 void CDecoder::seek( int64_t seekTime,int streamIndex)
 {
-    int defaultStreamIndex = av_find_default_stream_index(m_pFormatCtx);			
+    int defaultStreamIndex = av_find_default_stream_index(m_pFormatCtx);
     AVRational time_base = m_pFormatCtx->streams[defaultStreamIndex]->time_base;
     int64_t newDts = m_pFormatCtx->streams[defaultStreamIndex]->start_time + av_rescale(seekTime, time_base.den, time_base.num);
     if(newDts > m_pFormatCtx->streams[streamIndex]->cur_dts)
@@ -593,67 +681,127 @@ bool CDecoder::play_seek(unsigned int ntime)
 
 bool CDecoder::PreSingleFrame()
 {
-    m_bPause = true;
-    double lStart = (m_curPts*1000)-(100000*av_q2d(m_pCodecCtx->time_base));
-    if (lStart < 0)
-    {
-        lStart = 0;
+    int ret = 0;
+    int i = 0;
+    play_pause();
+    Sleep(100);
+    int64_t cur_pos = current_file.get_pos();
+    int64_t last_keyframe_pos = current_file.get_last_keyframe_dts(cur_pos);
+    if (last_keyframe_pos == FIND_KEYFRAME_ERROR_LAST_FILE || last_keyframe_pos == FIND_KEYFRAME_ERROR_NO_FOUND) {
+        //TODO: open pre file?
+        return false;
     }
-    av_seek_frame(m_pFormatCtx, m_videoindex, lStart*1000, AVSEEK_FLAG_BACKWARD/*|AVSEEK_FLAG_ANY*/);
+    int64_t cur_pts = m_pFrame->pts;
+    printf("current frame pts:%lld, last_keyframe_pos:%lld, cur_pos:%lld\n",m_pFrame->pts, last_keyframe_pos, cur_pos);
+    //av_seek_frame(m_pFormatCtx, m_videoindex, 0, AVSEEK_FLAG_BACKWARD);
+    ret = av_seek_frame(m_pFormatCtx, m_videoindex, last_keyframe_pos, AVSEEK_FLAG_ANY );
+    if (ret < 0) {
+        printf("seek error %d\n", ret);
+    }
     avcodec_flush_buffers(m_pFormatCtx->streams[m_videoindex]->codec);  // Çå¿Õ»º³å
-    int lRet = 0;
     int got_picture = -1;
-    AVPacket* pPacket=(AVPacket *)av_malloc(sizeof(AVPacket));
-    if(av_read_frame(m_pFormatCtx,pPacket)>=0)
-    {	
-        if(pPacket->stream_index == m_videoindex)
-        {			
 
-            int ret = avcodec_decode_video2(m_pCodecCtx,m_pFrame,&got_picture,pPacket);
-            if(ret < 0)
-            {
-                return false;
+    AVPacket* pkt;
+    AVFrame *frame;
+    AVFrame *last_frame;
+    bool has_found = false;
+    pkt = av_packet_alloc();
+    if (!pkt) {
+        goto FAIL;
+    }
+    frame = av_frame_alloc();
+    if (!frame) {
+        goto FAIL;
+    }
+    last_frame = av_frame_alloc();
+    if (!last_frame) {
+        goto FAIL;
+    }
+    while (true) {
+        ret = av_read_frame(m_pFormatCtx, pkt);
+        if (ret == 0) {
+            if (pkt->stream_index == m_videoindex) {
+                //printf("pkt dts:%lld,pos:%lld\n",pkt->dts, pkt->pos);
+                ret = avcodec_decode_video2(m_pCodecCtx, frame, &got_picture, pkt);
+                if (ret < 0) {
+                    goto FAIL;
+                }
+                if (got_picture) {
+                    //frame->pts = frame->best_effort_timestamp;
+                    if (frame->pts >= cur_pts) {
+                        printf("found frame pts:%lld, cur_pts:%lld, total skip %d\n",last_frame->pts, cur_pts, i);
+                        has_found = true;
+                        break;
+                    } else {
+                        i++;
+                        current_file.set_pos(pkt->pos);
+                        av_frame_unref(last_frame);
+                        av_frame_ref(last_frame, frame);
+                    }
+
+                }
             }
-            if(got_picture)
-            {
-                DisPlayFrame(m_pFrame);
-            }
+        } else {
+            goto FAIL;
         }
     }
-    av_free_packet(pPacket);
+
+    if (has_found) {
+        av_frame_unref(m_pFrame);
+        av_frame_ref(m_pFrame, last_frame);
+        DisPlayFrame(m_pFrame);
+    }
+FAIL:
+    av_frame_free(&last_frame);
+    av_frame_free(&frame);
+    av_packet_free(&pkt);
     return true;
 }
 
 bool CDecoder::NextSingleFrame()
 {
-	m_bPause = true;
+    play_pause();
     Sleep(100);
-	int lRet = 0;
+	int ret = 0;
 	int got_picture = -1;
-	AVPacket* pPacket=(AVPacket *)av_malloc(sizeof(AVPacket));
-	if(av_read_frame(m_pFormatCtx,pPacket)>=0)
-	{	
-		if(pPacket->stream_index == m_videoindex)
-		{			
-			
-			int ret = avcodec_decode_video2(m_pCodecCtx,m_pFrame,&got_picture,pPacket);
-			if(ret < 0)
-			{
-				return false;
-			}
-			if(got_picture)
-			{
-               DisPlayFrame(m_pFrame);
-			}
-		}
-	}
-	av_free_packet(pPacket);
+	AVPacket* pkt = av_packet_alloc();
+    while (true) {
+        ret = av_read_frame(m_pFormatCtx, pkt);
+        if (ret == 0) {
+            if (pkt->stream_index == m_videoindex) {
+                if (pkt->flags == AV_PKT_FLAG_KEY) {
+                    current_file.add_keyframe(pkt->pos, pkt->dts);
+                }
+                ret = avcodec_decode_video2(m_pCodecCtx, m_pFrame, &got_picture, pkt);
+                if (ret < 0)
+                {
+                    goto FAIL;
+                }
+                if (got_picture)
+                {
+                    current_file.set_pos(pkt->pos);
+                    DisPlayFrame(m_pFrame);
+                    break;
+                }
+            }
+        }
+        else if (ret == AVERROR_EOF) {
+            //read next file
+            goto FAIL;
+        }
+        else {
+            //error
+            goto FAIL;
+        }
+    }
+FAIL:
+	av_packet_free(&pkt);
     return true;
 }
 
 
 BOOL CDecoder::SaveToFile(const char * pFilename, unsigned char * pSurFrame, int w, int h)
-{	
+{
 	unsigned char *lpbuffer;
 	unsigned char *word;
 	//AvPicture * pFrame = (AvPicture*)pSurFrame;
@@ -701,7 +849,7 @@ BOOL CDecoder::SaveToFile(const char * pFilename, unsigned char * pSurFrame, int
 			/*************add in 2011 8.2 23:04*****************/
 			fputc( *(word+2), fp); // B
 			fputc( *(word+1), fp); // G
-			fputc( *(word+0), fp); // R			
+			fputc( *(word+0), fp); // R
 			/***********************************************/
 			/*fputc( *(word+2), fp); // B
 			fputc( *(word+1), fp); // G
@@ -712,4 +860,33 @@ BOOL CDecoder::SaveToFile(const char * pFilename, unsigned char * pSurFrame, int
 	}
 	fclose(fp);
 	return TRUE;
+}
+bool CDecoder::play_stop()
+{
+	stopdecoder();
+	return true;
+}
+bool CDecoder::play_save_start(const char* sSavePath)
+{
+	if(sSavePath == NULL )
+		return false;
+	m_strSaveFile = string(sSavePath);
+	m_bSaveVideo = true;
+	if(!m_pSaveFile)
+		m_pSaveFile = new CSaveAsFile;
+	if(m_pSaveFile)
+	{
+		m_pSaveFile->init(m_strSaveFile,m_screen_w,m_screen_h,m_nFrameRate);
+	}
+	return true;
+}
+bool CDecoder::play_save_stop()
+{
+	m_bSaveVideo = false;
+	m_bKey = false;
+	if(m_pSaveFile)
+	{
+		m_pSaveFile->stop_write();
+	}
+	return true;
 }

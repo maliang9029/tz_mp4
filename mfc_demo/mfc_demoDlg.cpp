@@ -78,6 +78,10 @@ END_MESSAGE_MAP()
 
 BOOL Cmfc_demoDlg::OnInitDialog()
 {
+
+#ifdef _DEBUG
+	AllocConsole();
+#endif
 	CDialog::OnInitDialog();
 
 	// 将“关于...”菜单项添加到系统菜单中。
@@ -107,9 +111,17 @@ BOOL Cmfc_demoDlg::OnInitDialog()
 
 	// TODO: 在此添加额外的初始化代码
 	m_lPlayId = 0;
-   
-	
+
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+}
+
+void Cmfc_demoDlg::OnOK()
+{
+#ifdef _DEBUG
+    FreeConsole();
+#endif
+    CDialog::OnOK();
 }
 
 void Cmfc_demoDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -193,7 +205,7 @@ void Cmfc_demoDlg::OnBnClickedBtnPlay()
 {
     // TODO: 在此添加控件通知处理程序代码
      unsigned int hWnd = (unsigned int)GetDlgItem(IDC_STATIC)->m_hWnd;
-    open_mp4(m_lPlayId,"",1920,1080,50);
+    open_mp4(m_lPlayId,"",1920,1080,25);
 
     play_start(m_lPlayId,hWnd);
 }
@@ -207,7 +219,7 @@ void Cmfc_demoDlg::OnBnClickedBtnSpeed()
 void Cmfc_demoDlg::OnBnClickedBtnSnap()
 {
     // TODO: 在此添加控件通知处理程序代码
-    play_snap(m_lPlayId,"D:\\snap");
+    play_snap(m_lPlayId,"D:\\workplace\\tz_mp4");
 }
 
 void Cmfc_demoDlg::OnBnClickedBtnSeek()

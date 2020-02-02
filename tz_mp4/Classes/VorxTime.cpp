@@ -185,9 +185,9 @@ namespace vfc
 	void CVorxTime::ToString(char* sRet, int len, bool bSeparate)
 	{
 		if(bSeparate)
-			snprintf(sRet, len,"%04d-%02d-%02d %02d:%02d:%02d",year,month,day,hour,minute,second);
+			_snprintf(sRet, len,"%04d-%02d-%02d %02d:%02d:%02d",year,month,day,hour,minute,second);
 		else
-			snprintf(sRet,len,"%04d%02d%02d%02d%02d%02d",year,month,day,hour,minute,second);
+			_snprintf(sRet,len,"%04d%02d%02d%02d%02d%02d",year,month,day,hour,minute,second);
 	}
 
 	time_t CVorxTime::GetTime() const

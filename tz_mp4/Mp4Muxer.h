@@ -3,50 +3,6 @@
 #define _MP4_MUXER_H_
 #include "common.h"
 
-enum HEVCNALUnitType {
-    HEVC_NAL_TRAIL_N    = 0,
-    HEVC_NAL_TRAIL_R    = 1,
-    HEVC_NAL_TSA_N      = 2,
-    HEVC_NAL_TSA_R      = 3,
-    HEVC_NAL_STSA_N     = 4,
-    HEVC_NAL_STSA_R     = 5,
-    HEVC_NAL_RADL_N     = 6,
-    HEVC_NAL_RADL_R     = 7,
-    HEVC_NAL_RASL_N     = 8,
-    HEVC_NAL_RASL_R     = 9,
-    HEVC_NAL_VCL_N10    = 10,
-    HEVC_NAL_VCL_R11    = 11,
-    HEVC_NAL_VCL_N12    = 12,
-    HEVC_NAL_VCL_R13    = 13,
-    HEVC_NAL_VCL_N14    = 14,
-    HEVC_NAL_VCL_R15    = 15,
-    HEVC_NAL_BLA_W_LP   = 16,
-    HEVC_NAL_BLA_W_RADL = 17,
-    HEVC_NAL_BLA_N_LP   = 18,
-    HEVC_NAL_IDR_W_RADL = 19,
-    HEVC_NAL_IDR_N_LP   = 20,
-    HEVC_NAL_CRA_NUT    = 21,
-    HEVC_NAL_IRAP_VCL22 = 22,
-    HEVC_NAL_IRAP_VCL23 = 23,
-    HEVC_NAL_RSV_VCL24  = 24,
-    HEVC_NAL_RSV_VCL25  = 25,
-    HEVC_NAL_RSV_VCL26  = 26,
-    HEVC_NAL_RSV_VCL27  = 27,
-    HEVC_NAL_RSV_VCL28  = 28,
-    HEVC_NAL_RSV_VCL29  = 29,
-    HEVC_NAL_RSV_VCL30  = 30,
-    HEVC_NAL_RSV_VCL31  = 31,
-    HEVC_NAL_VPS        = 32,
-    HEVC_NAL_SPS        = 33,
-    HEVC_NAL_PPS        = 34,
-    HEVC_NAL_AUD        = 35,
-    HEVC_NAL_EOS_NUT    = 36,
-    HEVC_NAL_EOB_NUT    = 37,
-    HEVC_NAL_FD_NUT     = 38,
-    HEVC_NAL_SEI_PREFIX = 39,
-    HEVC_NAL_SEI_SUFFIX = 40,
-};
-
 class CMessage
 {
 public:
@@ -130,15 +86,18 @@ public:
     int width;
     int height;
     int framerate;
-    int64_t max_fragment;
+    int64_t max_file_length;
 public:
-    bool init_muxing(int fragment = DEFAULT_MAX_FRAGMENT, int record_period = DEFAULT_RECORD_PERIOD, int file_period = DEFAULT_FILE_PERIOD);
+    bool init_muxing(int file_len = DEFAULT_MAX_FILE_LENGTH, int record_period_len = DEFAULT_RECORD_PERIOD_TIME, int record_history_len = DEFAULT_RECORD_HISTORY_TIME);
     bool write_packet(AVPacket* pkt);
     static int thread_muxing(LPVOID lParam);
     int do_muxing();
     void strat_muxing();
     bool parse_packet(const char* data, unsigned int len);
-    void set_record_timing(int64_t timing);
+    void set_delay_time(int64_t delay);
+    int64_t get_current_dts();
+    void get_record_list(vector<string> &vec);
+    void get_record_history(map<string, int> &history);
 private:
     int dump_packets(int max_count, CMessage** pmsg, int& count);
     bool create_multi_directory(void);
@@ -146,27 +105,28 @@ private:
     int segment_open();
     int segment_close();
     int reap_segment();
-    int segment_shrink();
-    int refresh_file_list();
+    int segment_shrink(bool is_close = true);
+    int refresh_period_list(string filename);
+    int refresh_history_list(string filename);
     int mp4_muxing(CMessage* msg);
-    void init_segments();
-    void init_segments_ori();
+    void init_segments_period();
+    void init_segments_history();
 private:
     FastVector msgs;
     CVorxMutex mutex;
-    int64_t record_timing;
+    int64_t delay_time;
     CMp4Segment* current;
-    //vector<CMp4Segment*> segments;
-    //vector<CMp4Segment*> segments_ori;
-    CVorxMutex mutex_seg;
-    vector<string> segments;
-    CVorxMutex mutex_seg_ori;
-    vector<string> segments_ori;
+    //vector<CMp4Segment*> segments_period;
+    //vector<CMp4Segment*> segments_history;
+    CVorxMutex mutex_period;
+    vector<string> segments_period;
+    CVorxMutex mutex_history;
+    map<string, int> segments_history;
     CVorxThread thread;
     AVCodecParserContext *parser;
     AVCodecContext *c;
-    int record_window;
-    int remove_window;
+    int record_period_window;
+    int record_history_window;
     string index_filename;
     string index_all_filename;
     bool is_muxing_start;
@@ -174,6 +134,7 @@ private:
     int64_t dts;
     int64_t next_pts;
     int64_t pts;
+    int64_t current_dts;
 
 };
 #endif//_MP4_MUXER_H_

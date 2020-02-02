@@ -5,6 +5,11 @@
 
 #pragma once
 
+
+#ifdef _DEBUG
+#pragma comment( linker, "/subsystem:console /entry:wWinMainCRTStartup" )
+#endif
+
 #ifndef _SECURE_ATL
 #define _SECURE_ATL 1
 #endif

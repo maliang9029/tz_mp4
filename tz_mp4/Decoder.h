@@ -10,7 +10,14 @@
 #define V_DATA_POINTERS 4
 #define DelayTime 5
 #define HCHN int
+
+#define FIND_KEYFRAME_ERROR_LAST_FILE -1
+#define FIND_KEYFRAME_ERROR_NO_FOUND -2
+
+
+
 #include "ImgConvert.h"
+#include "SaveAsFile.h"
 typedef struct VPicture
 {
 	unsigned char *data[V_DATA_POINTERS];
@@ -28,6 +35,26 @@ typedef struct VPicture
  */
 typedef void (*ON_VEDIO_DATA)(int nWidth, int nHeight, VPicture* picture, void* lParam);
 
+class CRecordInfo
+{
+public:
+    CRecordInfo();
+    ~CRecordInfo();
+    CRecordInfo(const CRecordInfo & c);
+private:
+    string file_name;
+    int64_t pos;//byte position in stream
+    map<int64_t, int64_t> keyframe_positions;
+public:
+    int64_t get_last_keyframe_dts(int64_t pos);
+    void add_keyframe(int64_t pos, int64_t dts);
+    void set_file_name(string filename);
+    string get_file_name();
+    void clear();
+    void set_pos(int64_t pos);
+    int64_t get_pos();
+};
+
 class CDecoder
 {
 public:
@@ -39,12 +66,16 @@ public:
 	void d3dinit();
 	bool play_pause();
     bool play_resume();
-	void play();
+	int play();
 	bool snapshot(const char* sFilePath);
 	bool NextSingleFrame();
     bool PreSingleFrame();
     bool play_speed(int speed);
 	bool play_seek(unsigned int ntime);
+	bool play_stop();
+	bool play_save_start(const char* sSavePath);
+	bool play_save_stop();
+    static int thread_fun(LPVOID lParam);
 
     void SetVideoCallBack(ON_VEDIO_DATA pCallBack,void* lUserData);
 	IDirect3D9 *m_pDirect3D9;
@@ -80,6 +111,7 @@ private:
     int64_t  m_lastDts;
     int64_t  m_lastPts;
     int64_t  m_seekTime;
+	bool m_bKey;
 
 
 	AVFilterContext *m_pBuffersink_ctx;
@@ -87,14 +119,18 @@ private:
 	AVFilterGraph *m_pFilter_graph;
 
 
+	CVorxMutex mutex;
 	CVorxThread m_hThread;
 	int m_videoindex;
-	int m_audioindex;
 	HWND m_hWnd;
 	bool m_bPause;
 	bool m_bCapTure;
 	float m_nPlaySpeed;
 	CImgConvert*	m_pimgConvert;
     VPicture m_snapPic;
-	static int thread_fun(LPVOID lParam);
+	string m_strSaveFile;
+	bool m_bSaveVideo;
+    CRecordInfo current_file;
+    CRecordInfo pre_file;
+	CSaveAsFile* m_pSaveFile;
 };
