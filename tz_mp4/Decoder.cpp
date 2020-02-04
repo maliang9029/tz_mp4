@@ -506,16 +506,10 @@ void CDecoder::stopdecoder()
 	m_hThread.Stop();
 
     safe_freep(m_pFrame);
-	if (m_pCodecCtx != NULL) {
-		avcodec_close(m_pCodecCtx);
-		av_free(m_pCodecCtx);
-		m_pCodecCtx = NULL;
-	}
     safe_freep(m_pSaveFile);
-	/*if (ifmt_ctx != NULL)
-	{
+	if (ifmt_ctx != NULL) {
 		avformat_free_context(ifmt_ctx);
-	}*/
+	}
 	Cleanup();
 	DestroyImgConvert();
 }
