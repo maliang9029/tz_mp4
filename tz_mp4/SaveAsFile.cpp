@@ -12,51 +12,26 @@ CSaveAsFile::CSaveAsFile(void)
 ,m_next_dts(0)
 ,m_current_dts(0)
 ,m_max_file_length(0)
-,c(NULL)
-,parser(NULL)
 {
-	m_threadSaveVideo.SetParam(thread_savevideo,this,500,NULL);
+	m_threadSaveVideo.SetParam(thread_save_video,this,500,NULL);
 }
 
 CSaveAsFile::~CSaveAsFile(void)
 {
+    stop_write();
 }
 
-bool CSaveAsFile::init(string sFile,int w,int h,int nFrameRate)
+bool CSaveAsFile::init(string sFile,int playid,int w,int h,int nFrameRate,AVFormatContext *ifmt_ctx)
 {
+    if (!ifmt_ctx) {
+        return false;
+    }
+    this->playid = playid;
 	m_strSaveFile = sFile;
 	m_screen_w = w;
 	m_screen_h = h;
 	m_nFrameRate = nFrameRate;
-	const AVCodec *codec;
-	codec = avcodec_find_decoder(AV_CODEC_ID_HEVC);
-	c = avcodec_alloc_context3(codec);
-	if (!c) {
-		return false;
-	}
-	parser = av_parser_init(AV_CODEC_ID_HEVC);
-	if (!parser) {
-		return false;
-	}
-	if (avcodec_open2(c, codec, NULL) < 0) {
-		return false;
-	}
-
-	/*max_file_length = (fragment > 0 ? fragment : DEFAULT_MAX_FILE_LENGTH);
-	int _record_period = (record_period > 0 ? record_period : DEFAULT_RECORD_PERIOD_TIME);
-	int _file_period = (file_period > 0 ? file_period : DEFAULT_RECORD_HISTORY_TIME);
-	double tmp = _record_period / (double)max_file_length;
-	record_period_window = (int)ceil(tmp);
-	tmp = _file_period / (double)max_file_length;
-	record_history_window = (int)ceil(tmp);
-
-	if (create_multi_directory() != true) {
-		return false;
-	}*/
-
-	
-
-	if (segment_open() != MP4_SUCCESS) {
+	if (segment_open(ifmt_ctx) != MP4_SUCCESS) {
 		return false;
 	}
 	start_muxing();
@@ -68,9 +43,12 @@ void CSaveAsFile::start_muxing()
 	m_threadSaveVideo.Start();
 }
 
-int CSaveAsFile::segment_open()
+int CSaveAsFile::segment_open(AVFormatContext *ifmt_ctx)
 {
 	int ret = MP4_SUCCESS;
+    if (!ifmt_ctx) {
+        return MP4_ERROR;
+    }
 	if (m_current) {
 		//warn
 		safe_freep(m_current);
@@ -94,7 +72,7 @@ int CSaveAsFile::segment_open()
 		file_name = m_strSaveFile.substr(nPos+1,m_strSaveFile.size());
 	}
 	m_current = new CMp4Segment(path, file_name, m_screen_w, m_screen_h, m_nFrameRate);
-	return m_current->init_segment();
+	return m_current->init_segment(ifmt_ctx);
 }
 
 int CSaveAsFile::segment_shrink()
@@ -117,8 +95,8 @@ int CSaveAsFile::segment_close()
 int CSaveAsFile::reap_segment()
 {
 	int ret = MP4_SUCCESS;
-	segment_close();
-	segment_open();
+	//segment_close();
+	//segment_open();
 	return ret;
 }
 
@@ -182,7 +160,7 @@ int CSaveAsFile::do_muxing()
 	return 0;
 }
 
-int CSaveAsFile::thread_savevideo(LPVOID lParam)
+int CSaveAsFile::thread_save_video(LPVOID lParam)
 {
 	CSaveAsFile* pThis = (CSaveAsFile*)lParam;
 	if(pThis)
@@ -206,11 +184,5 @@ int CSaveAsFile::stop_write()
 	safe_freep(m_current);
 	m_msgs.free();
 	m_msgs.clear();
-	if (parser) {
-		av_parser_close(parser);
-	}
-	if (c) {
-		avcodec_free_context(&c);
-	}
 	return 0;
 }

@@ -58,10 +58,10 @@ public:
 class CDecoder
 {
 public:
-	CDecoder(void);
+	CDecoder();
 	~CDecoder(void);
 public:
-	bool init(const char* sFilePath,HWND hWnd);
+	bool init(const char* sFilePath, HWND hWnd, int playid);
 	void stopdecoder();
 	void d3dinit();
 	bool play_pause();
@@ -104,14 +104,14 @@ private:
     void seek( int64_t seekTime,int streamIndex);
     void DisPlayFrame(AVFrame* frame);
 private:
-	AVFormatContext	*m_pFormatCtx;
+	AVFormatContext	*ifmt_ctx;
 	AVCodecContext	*m_pCodecCtx;
 
 	AVFrame	*m_pFrame;
     int64_t  m_lastDts;
     int64_t  m_lastPts;
     int64_t  m_seekTime;
-	bool m_bKey;
+	bool b_strart_save;
 
 
 	AVFilterContext *m_pBuffersink_ctx;
@@ -132,5 +132,7 @@ private:
 	bool m_bSaveVideo;
     CRecordInfo current_file;
     CRecordInfo pre_file;
+    CVorxMutex mutex_save_file;
 	CSaveAsFile* m_pSaveFile;
+    int playid;
 };

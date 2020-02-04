@@ -71,6 +71,10 @@ BEGIN_MESSAGE_MAP(Cmfc_demoDlg, CDialog)
     ON_BN_CLICKED(IDC_BTN_SPEED, &Cmfc_demoDlg::OnBnClickedBtnSpeed)
     ON_BN_CLICKED(IDC_BTN_SNAP, &Cmfc_demoDlg::OnBnClickedBtnSnap)
 	ON_BN_CLICKED(IDC_BTN_SEEK, &Cmfc_demoDlg::OnBnClickedBtnSeek)
+	ON_BN_CLICKED(IDC_BTN_STOP, &Cmfc_demoDlg::OnBnClickedBtnStop)
+	ON_BN_CLICKED(IDC_BTN_QUERY, &Cmfc_demoDlg::OnBnClickedBtnQuery)
+	ON_BN_CLICKED(IDC_BTN_SAVE_FILE, &Cmfc_demoDlg::OnBnClickedBtnSaveFile)
+	ON_BN_CLICKED(IDC_BTN_STOP_SAVE, &Cmfc_demoDlg::OnBnClickedBtnStopSave)
 END_MESSAGE_MAP()
 
 
@@ -111,8 +115,21 @@ BOOL Cmfc_demoDlg::OnInitDialog()
 
 	// TODO: 在此添加额外的初始化代码
 	m_lPlayId = 0;
-
-
+	m_hWnd = (unsigned int)GetDlgItem(IDC_STATIC)->m_hWnd;
+	open_mp4(m_lPlayId,"D:\\workplace\\tz_mp4\\",1920,1080,25);
+	FILE *file = NULL;
+	//file = fopen("D:\\RAW_DATA.h265", "rb");
+	file = fopen("D:\\workplace\\tz_mp4\\linyuner.265", "rb");
+	if (!file) {
+		return 0;
+	}
+	char buff[2048];
+	int count = 0;
+	while (!feof(file)) {
+		count = fread (buff, 1, 2048, file);
+		write_frame(m_lPlayId, buff, count);
+	}
+	fclose(file);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -204,7 +221,7 @@ void Cmfc_demoDlg::OnBnClickedBtnResume()
 void Cmfc_demoDlg::OnBnClickedBtnPlay()
 {
     // TODO: 在此添加控件通知处理程序代码
-     unsigned int hWnd = (unsigned int)GetDlgItem(IDC_STATIC)->m_hWnd;
+    unsigned int hWnd = (unsigned int)GetDlgItem(IDC_STATIC)->m_hWnd;
     open_mp4(m_lPlayId,"",1920,1080,25);
 
     play_start(m_lPlayId,hWnd);
@@ -226,4 +243,29 @@ void Cmfc_demoDlg::OnBnClickedBtnSeek()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	play_seek(m_lPlayId,0);
+}
+
+void Cmfc_demoDlg::OnBnClickedBtnStop()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	play_stop(m_lPlayId);
+}
+
+void Cmfc_demoDlg::OnBnClickedBtnQuery()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	unsigned int ts,cur_ts;
+	play_ts(m_lPlayId,ts,cur_ts);
+}
+
+void Cmfc_demoDlg::OnBnClickedBtnSaveFile()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	play_save_start(m_lPlayId,"D:\\123.mp4");
+}
+
+void Cmfc_demoDlg::OnBnClickedBtnStopSave()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	play_save_stop(m_lPlayId);
 }

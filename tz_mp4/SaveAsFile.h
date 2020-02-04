@@ -8,19 +8,19 @@ public:
 	CSaveAsFile(void);
 	~CSaveAsFile(void);
 public:
-	bool init(string sFile,int w,int h,int nFrameRate);
+	bool init(string sFile,int playid,int w,int h,int nFrameRate,AVFormatContext *ifmt_ctx);
 	void write_packet(AVPacket* pkt);
 	int stop_write();
 private:
 	int dump_packets(int max_count, CMessage** pmsg, int& count);
 	int do_muxing();
 	int mp4_muxing(CMessage* msg);
-	int segment_open();
+	int segment_open(AVFormatContext *ifmt_ctx);
 	int segment_close();
 	int reap_segment();
 	int segment_shrink();
 	void start_muxing();
-	static int thread_savevideo(LPVOID lParam);
+	static int thread_save_video(LPVOID lParam);
 private:
 	FastVector m_msgs;
 	CMp4Segment* m_current;
@@ -37,8 +37,6 @@ private:
 	int m_screen_w;
 	int m_screen_h;
 	int m_nFrameRate;
-	AVCodecParserContext *parser;
-	AVCodecContext *c;
-
+    int playid;
 };
 #endif

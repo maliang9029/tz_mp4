@@ -203,8 +203,6 @@ CMp4Segment::CMp4Segment(string path, string file_name, int w, int h, int r)
     height = h;
     framerate = r;
     o_fmt_ctx = NULL;
-    o_video_stream = NULL;
-    codec_ctx = NULL;
     duration = 0;
     segment_start_time = AV_NOPTS_VALUE;
     segment_end_time = AV_NOPTS_VALUE;
@@ -216,49 +214,64 @@ CMp4Segment::~CMp4Segment()
     if (o_fmt_ctx) {
         av_write_trailer(o_fmt_ctx);
     }
-    if (codec_ctx) {
-       avcodec_free_context(&codec_ctx);
-    }
     if (o_fmt_ctx) {
         avio_closep(&o_fmt_ctx->pb);
         avformat_free_context(o_fmt_ctx);
     }
 }
 
-int CMp4Segment::init_segment()
+int CMp4Segment::init_segment(AVFormatContext *ifmt_ctx)
 {
     int ret = MP4_SUCCESS;
     char *filename = (char*)full_path.c_str();
-    AVCodec *codec = NULL;
-    AVDictionary *opts = NULL;
-    codec = avcodec_find_encoder(AV_CODEC_ID_HEVC);
-    if (!codec) {
-        return MP4_ERROR;
-    }
     avformat_alloc_output_context2(&o_fmt_ctx, NULL, NULL, filename);
     if (!o_fmt_ctx) {
         return MP4_ERROR;
     }
-    o_video_stream = avformat_new_stream(o_fmt_ctx, codec);
-    o_video_stream->time_base = in_time_base;
-    if (!o_video_stream) {
-        return MP4_ERROR;
-    }
-    codec_ctx = avcodec_alloc_context3(codec);
-    if (!codec_ctx) {
-        return MP4_ERROR;
-    }
-    codec_ctx->width = width;
-    codec_ctx->height = height;
-    codec_ctx->time_base.den = framerate;
-    codec_ctx->time_base.num = 1;
-    codec_ctx->pix_fmt = AV_PIX_FMT_YUV420P;
-    if (o_fmt_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
-        codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-    }
-    ret = avcodec_parameters_from_context(o_video_stream->codecpar, codec_ctx);
-    if (ret < 0) {
-        return MP4_ERROR;
+    AVDictionary *opts = NULL;
+    if (ifmt_ctx) {
+        for (int i = 0; i < ifmt_ctx->nb_streams; i++) {
+            AVStream *out_stream = NULL;
+            AVStream *in_stream = ifmt_ctx->streams[i];
+            AVCodecParameters *in_codecpar = in_stream->codecpar;
+            AVCodecContext *in_codec = in_stream->codec;
+            out_stream = avformat_new_stream(o_fmt_ctx, NULL);
+            if (!out_stream) {
+                return false;
+            }
+            out_stream->time_base = in_time_base;
+            avcodec_parameters_copy(out_stream->codecpar, in_codecpar);
+            avcodec_copy_context(out_stream->codec, in_codec);
+            //avcodec_parameters_from_context(out_stream->codecpar, out_stream->codec);
+        }
+    } else {
+        AVCodec *codec = NULL;
+        codec = avcodec_find_encoder(AV_CODEC_ID_HEVC);
+        if (!codec) {
+            return MP4_ERROR;
+        }
+
+        AVStream *o_video_stream = avformat_new_stream(o_fmt_ctx, codec);
+        if (!o_video_stream) {
+            return MP4_ERROR;
+        }
+        o_video_stream->time_base = in_time_base;
+        AVCodecContext *codec_ctx = o_video_stream->codec;
+        if (!codec_ctx) {
+            return MP4_ERROR;
+        }
+        codec_ctx->width = width;
+        codec_ctx->height = height;
+        codec_ctx->time_base.den = framerate;
+        codec_ctx->time_base.num = 1;
+        codec_ctx->pix_fmt = AV_PIX_FMT_YUV420P;
+        if (o_fmt_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
+            codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+        }
+        ret = avcodec_parameters_from_context(o_video_stream->codecpar, codec_ctx);
+        if (ret < 0) {
+            return MP4_ERROR;
+        }
     }
 
     //创建并打开MP4文件
@@ -340,10 +353,11 @@ CMp4Muxer::CMp4Muxer(string path, int playid, int w, int h, int r)
     next_pts = AV_NOPTS_VALUE;
     pts = AV_NOPTS_VALUE;
     current_dts = 0;
+    need_change_file = true;
     printf("path:%s, index_filename:%s, index_all_filename:%s\n", path.c_str(), index_filename.c_str(), index_all_filename.c_str());
 }
 
-bool CMp4Muxer::init_muxing(int file_len, int record_period_len, int record_history_len)
+bool CMp4Muxer::init_muxing(bool change_file, int file_len, int record_period_len, int record_history_len)
 {
     const AVCodec *codec;
     codec = avcodec_find_decoder(AV_CODEC_ID_HEVC);
@@ -371,8 +385,11 @@ bool CMp4Muxer::init_muxing(int file_len, int record_period_len, int record_hist
         return false;
     }
 
-    init_segments_period();
-    init_segments_history();
+    need_change_file = change_file;
+    if (need_change_file) {
+        init_segments_period();
+        init_segments_history();
+    }
 
     if (segment_open() != MP4_SUCCESS) {
         return false;
@@ -754,7 +771,7 @@ int CMp4Muxer::mp4_muxing(CMessage* msg)
         return MP4_ERROR;
     }
     int64_t duration = current->get_duration();
-    if (duration >= max_file_length && msg->pkt->flags == AV_PKT_FLAG_KEY) {
+    if (need_change_file && duration >= max_file_length && msg->pkt->flags == AV_PKT_FLAG_KEY) {
         ret = reap_segment();
     }
     if (ret != MP4_SUCCESS) {
@@ -763,7 +780,7 @@ int CMp4Muxer::mp4_muxing(CMessage* msg)
     current_dts = msg->pkt->dts;
     current->ffmpeg_muxing(msg);
     duration = current->get_duration();
-    if (duration >= delay_time) {
+    if (need_change_file && duration >= delay_time) {
         segment_shrink();
     }
     return ret;

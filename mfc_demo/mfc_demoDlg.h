@@ -19,7 +19,7 @@ public:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 public:
     unsigned int m_lPlayId ;
-
+	unsigned int m_hWnd;
 // 实现
 protected:
 	HICON m_hIcon;
@@ -40,4 +40,8 @@ public:
     afx_msg void OnBnClickedBtnSnap();
 	afx_msg void OnBnClickedBtnSeek();
     afx_msg void OnOK();
+	afx_msg void OnBnClickedBtnStop();
+	afx_msg void OnBnClickedBtnQuery();
+	afx_msg void OnBnClickedBtnSaveFile();
+	afx_msg void OnBnClickedBtnStopSave();
 };

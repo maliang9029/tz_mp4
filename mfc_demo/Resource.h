@@ -17,6 +17,11 @@
 #define IDC_BTN_SNAP                    1006
 #define IDC_BUTTON2                     1007
 #define IDC_BTN_SEEK                    1007
+#define IDC_BTN_STOP                    1008
+#define IDC_BTN_QUERY                   1009
+#define IDC_BTN_SAVE_FILE               1010
+#define IDC_BUTTON4                     1011
+#define IDC_BTN_STOP_SAVE               1011
 
 // Next default values for new objects
 // 

@@ -62,14 +62,12 @@ public:
     int64_t duration;//s
 private:
     AVFormatContext *o_fmt_ctx;
-    AVStream *o_video_stream;
-    AVCodecContext *codec_ctx;
     string path;
     int width;
     int height;
     int framerate;
 public:
-    int init_segment();
+    int init_segment(AVFormatContext *ifmt_ctx = NULL);
     int64_t get_duration();
     void update_duration(int64_t dts);
     int ffmpeg_muxing(CMessage* msg);
@@ -88,7 +86,7 @@ public:
     int framerate;
     int64_t max_file_length;
 public:
-    bool init_muxing(int file_len = DEFAULT_MAX_FILE_LENGTH, int record_period_len = DEFAULT_RECORD_PERIOD_TIME, int record_history_len = DEFAULT_RECORD_HISTORY_TIME);
+    bool init_muxing(bool change_file = true, int file_len = DEFAULT_MAX_FILE_LENGTH, int record_period_len = DEFAULT_RECORD_PERIOD_TIME, int record_history_len = DEFAULT_RECORD_HISTORY_TIME);
     bool write_packet(AVPacket* pkt);
     static int thread_muxing(LPVOID lParam);
     int do_muxing();
@@ -135,6 +133,7 @@ private:
     int64_t next_pts;
     int64_t pts;
     int64_t current_dts;
+    bool need_change_file;
 
 };
 #endif//_MP4_MUXER_H_

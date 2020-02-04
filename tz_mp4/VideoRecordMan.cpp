@@ -24,7 +24,7 @@ void CVideoRecordMan::MyON_VEDIO_DATA(int width, int height, VPicture* pic, void
 bool CVideoRecordMan::play_start(unsigned int hWnd)
 {
 	if(!m_pDecoder) {
-		m_pDecoder = new CDecoder;
+		m_pDecoder = new CDecoder();
     }
 	if(!m_pDecoder) {
 		return false;
@@ -38,7 +38,7 @@ bool CVideoRecordMan::play_start(unsigned int hWnd)
 	//m_pDecoder->SetVideoCallBack(MyON_VEDIO_DATA,(void*)this);
     //return m_pDecoder->init(strFile.c_str(),(HWND)hWnd);
     //return m_pDecoder->init("D:\\RAW_DATA.h265",(HWND)hWnd);
-	return m_pDecoder->init("D:\\workplace\\tz_mp4\\RAW.mp4",(HWND)hWnd);
+	return m_pDecoder->init("D:\\workplace\\tz_mp4\\output.mp4",(HWND)hWnd, playid);
 }
 
 bool CVideoRecordMan::write_frame(const char * data, unsigned int len)
@@ -57,7 +57,7 @@ bool CVideoRecordMan::init_record()
     if (!mp4_muxer) {
         mp4_muxer = new CMp4Muxer(path, playid, width, height, framerate);
     }
-    return mp4_muxer->init_muxing();
+    return mp4_muxer->init_muxing(true);
 }
 
 bool CVideoRecordMan::play_pause()
