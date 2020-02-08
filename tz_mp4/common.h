@@ -20,6 +20,7 @@ using namespace std;
 #include "Classes/MutexInteger.h"
 #include "Classes/VorxThread.h"
 using namespace vfc;
+#define PRINT_  0
 
 extern "C"
 {
@@ -56,7 +57,7 @@ extern "C"
 #pragma comment(lib,"d3d9.lib")
 
 #define MAX_READ_PACKETS                    128
-#define DEFAULT_DELAY_TIME                  10*1000//10s
+#define DEFAULT_DELAY_TIME                  7*1000//10s
 #define MP4_SUCCESS                         0
 #define MP4_ERROR                           1
 #if 0
@@ -71,6 +72,10 @@ extern "C"
 #if _MSC_VER
 #define snprintf _snprintf
 #endif
+
+extern AVRational in_time_base;
+extern AVRational mux_timebase;
+extern AVRational TIME_BASE;
 
 
 // free the p and set to NULL.

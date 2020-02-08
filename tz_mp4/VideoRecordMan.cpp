@@ -16,7 +16,82 @@ CVideoRecordMan::~CVideoRecordMan(void)
     safe_freep(mp4_muxer);
 }
 
-void CVideoRecordMan::MyON_VEDIO_DATA(int width, int height, VPicture* pic, void* lParam)
+string CVideoRecordMan::next_file_call_back(string strCurFile, void* lParam)
+{
+	CVideoRecordMan* pThis = (CVideoRecordMan*)lParam;
+	if(pThis)
+	{
+		pThis->play_next_file(strCurFile);
+	}
+    return "";
+}
+
+string CVideoRecordMan::pre_file_call_back(string strCurFile, void* lParam)
+{
+	CVideoRecordMan* pThis = (CVideoRecordMan*)lParam;
+	if(pThis)
+	{
+		return pThis->get_pre_file(strCurFile);
+	}
+    return "";
+}
+
+string CVideoRecordMan::get_next_file(string strCurFile)
+{
+    string next_file = "";
+	m_vecFileList.clear();
+	m_mapRecordHistory.clear();
+	get_record_list(m_vecFileList);
+	get_record_history(m_mapRecordHistory);
+	std::map<string, FileInfo>::iterator it = m_mapRecordHistory.find(strCurFile);
+    if (it != m_mapRecordHistory.end()) {
+        it++;
+        if (it != m_mapRecordHistory.end()) {
+            return it->first;
+        }
+
+    }
+    printf("is end!!!!!!\n");
+    return next_file;
+}
+
+string CVideoRecordMan::get_pre_file(string strCurFile)
+{
+    string pre_file = "";
+    m_vecFileList.clear();
+	m_mapRecordHistory.clear();
+	get_record_list(m_vecFileList);
+	get_record_history(m_mapRecordHistory);
+	std::map<string,FileInfo>::iterator it = m_mapRecordHistory.find(strCurFile);
+    if (it != m_mapRecordHistory.end()) {
+        if (it != m_mapRecordHistory.begin()) {
+            it--;
+            return it->first;
+        }
+    }
+    printf("is begin!!!!!!\n");
+    return pre_file;
+}
+
+void CVideoRecordMan::play_next_file(string strCurFile)
+{
+	//if(nPos < m_vecFileList.size())
+	{
+
+		string strNextFile = get_next_file(strCurFile);
+		if (m_pDecoder && strNextFile != "")
+		{
+			//m_pDecoder->stopdecoder();
+			CAutoMutex lock(&m_mutex);
+			if(m_pDecoder) {
+				m_pDecoder->init(strNextFile.c_str(), m_hWnd,playid);
+            }
+		}
+	}
+
+}
+
+void CVideoRecordMan::play_pre_file(string strCurFile)
 {
 
 }
@@ -24,21 +99,15 @@ void CVideoRecordMan::MyON_VEDIO_DATA(int width, int height, VPicture* pic, void
 bool CVideoRecordMan::play_start(unsigned int hWnd)
 {
 	if(!m_pDecoder) {
-		m_pDecoder = new CDecoder();
+        m_pDecoder = new CDecoder;
+        m_pDecoder->set_play_end_callback(next_file_call_back, pre_file_call_back, (void*)this);
     }
-	if(!m_pDecoder) {
+	if(!m_pDecoder)
 		return false;
-    }
-
-	if(!m_vecFileList.size()) {
-		//return false;
-    }
-	std::vector<string>::iterator it;
-	//string strFile = m_vecFileList.at(m_vecFileList.size()-1);
-	//m_pDecoder->SetVideoCallBack(MyON_VEDIO_DATA,(void*)this);
-    //return m_pDecoder->init(strFile.c_str(),(HWND)hWnd);
-    //return m_pDecoder->init("D:\\RAW_DATA.h265",(HWND)hWnd);
-	return m_pDecoder->init("D:\\workplace\\tz_mp4\\output.mp4",(HWND)hWnd, playid);
+	m_hWnd = (HWND)hWnd;
+	string strFile = m_mapRecordHistory.begin()->first;
+    return m_pDecoder->init(strFile.c_str(),(HWND)hWnd,playid);
+	//return m_pDecoder->init("D:\\workplace\\tz_mp4\\output.mp4",(HWND)hWnd, playid);
 }
 
 bool CVideoRecordMan::write_frame(const char * data, unsigned int len)
@@ -89,7 +158,24 @@ bool CVideoRecordMan::play_seek(unsigned int ntime)
 	if(!m_pDecoder) {
 		return false;
     }
-	return m_pDecoder->play_seek(ntime);
+	int64_t curTime = ntime*1000;
+	int64_t seekTime= 0;
+	string strFile;
+	std::map<string,FileInfo>::iterator it = m_mapRecordHistory.begin();
+	for (;it!=m_mapRecordHistory.end();++it)
+	{
+		if(it->second.all_time>curTime){
+			strFile = it->first;
+			seekTime = it->second.all_time - curTime;
+			break;
+		}
+	}
+	if(strFile != m_pDecoder->get_cur_play_file())	{
+		m_pDecoder->init(strFile.c_str(),m_hWnd,playid);
+		Sleep(200);
+	}
+
+	return m_pDecoder->play_seek(seekTime);
 }
 
 bool CVideoRecordMan::play_step_prev()
@@ -132,6 +218,7 @@ bool CVideoRecordMan::play_save_stop()
 }
 bool CVideoRecordMan::play_stop()
 {
+	CAutoMutex lock(&m_mutex);
 	if(!m_pDecoder) {
 		return false;
     }
@@ -158,7 +245,7 @@ void CVideoRecordMan::get_record_list(vector<string> &vec)
     return;
 }
 
-void CVideoRecordMan::get_record_history(map<string, int> &history)
+void CVideoRecordMan::get_record_history(map<string, FileInfo> &history)
 {
     if (mp4_muxer) {
         return mp4_muxer->get_record_history(history);
@@ -166,16 +253,48 @@ void CVideoRecordMan::get_record_history(map<string, int> &history)
     return;
 }
 
+string CVideoRecordMan::get_cur_file()
+{
+	if(m_pDecoder)
+		return m_pDecoder->get_cur_play_file();
+	return "";
+}
+
+int64_t CVideoRecordMan::get_cur_play_time()
+{
+	if(m_pDecoder)
+		return m_pDecoder->get_cur_play_time();
+	return 0;
+}
+
 bool CVideoRecordMan::play_ts(unsigned int &ts,unsigned int &cur_ts)
 {
 	std::vector<string> veclist;
+	std::map<string,FileInfo> mapHistory;
 	get_record_list(veclist);
-	if(veclist.size() == 1) {
-		int64_t tm = get_current_dts();
-		cur_ts = tm;
-		ts = tm;
-	} else {
+	get_record_history(mapHistory);
+	int64_t _ts = 0,_cur_ts=0;
+	std::map<string,FileInfo>::iterator it = mapHistory.begin();
+	int64_t nAllTime = 0;
+	string curfile = get_cur_file();
+	for (;it!=mapHistory.end();++it)
+	{
+		_ts += it->second.duration;
+		if(mapHistory.begin()->first != curfile)
+		{
+			if(it->first == curfile)
+				_cur_ts += nAllTime;
+		}
+
+		it->second.all_time =nAllTime+it->second.duration;
+		nAllTime = it->second.all_time;
 	}
+	_cur_ts += get_cur_play_time()*1000;
+	m_mapRecordHistory = mapHistory;
+	_ts += get_current_dts();
+	ts = _ts;
+	cur_ts = _cur_ts;
 	m_vecFileList.assign(veclist.begin(),veclist.end());
+
 	return true;
 }

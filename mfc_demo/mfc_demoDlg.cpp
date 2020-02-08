@@ -222,7 +222,7 @@ void Cmfc_demoDlg::OnBnClickedBtnPlay()
 {
     // TODO: 在此添加控件通知处理程序代码
     unsigned int hWnd = (unsigned int)GetDlgItem(IDC_STATIC)->m_hWnd;
-    open_mp4(m_lPlayId,"",1920,1080,25);
+    //open_mp4(m_lPlayId,"",1920,1080,25);
 
     play_start(m_lPlayId,hWnd);
 }

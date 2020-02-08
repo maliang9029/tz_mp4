@@ -146,7 +146,7 @@ bool CPlayBackMan::play_start_time(unsigned int lPlayID,unsigned int start_time)
     CVideoRecordMan* videoRecordMan = getVideoRecordManHandle(lPlayID);
     if(!videoRecordMan)
         return false;
-    return true;
+    return videoRecordMan->play_seek(start_time);
 }
 
 bool CPlayBackMan::play_save_start(unsigned int lPlayID,const char* sSavePath)

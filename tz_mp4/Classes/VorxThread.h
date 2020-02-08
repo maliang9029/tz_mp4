@@ -70,6 +70,7 @@ namespace vfc
 		void SetStackSize(unsigned int nSize);
 		//获取运行状态
 		BOOL IsRuning(){return m_bThread;}
+        BOOL IsSuspend(){return m_bSuspend;}
 		//唤醒休眠状态
 		void Waken(){m_oEvent.Signal();}
 		//等待时间

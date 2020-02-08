@@ -15,7 +15,8 @@ public:
     CVideoRecordMan(const char* sFilePath, int nPlayID, unsigned int w,unsigned int h, unsigned int frameRate);
     ~CVideoRecordMan(void);
 public:
-    static void MyON_VEDIO_DATA(int width, int height, VPicture* pic, void* lParam);
+    static string next_file_call_back(string strCurFile, void* lParam);
+    static string pre_file_call_back(string strCurFile, void* lParam);
 	bool play_ts(unsigned int &ts,unsigned int &cur_ts);
     bool play_start(unsigned int hWnd);
     bool write_frame(const char* data, unsigned int len);
@@ -30,9 +31,16 @@ public:
 	bool play_stop();
 	bool play_save_start(const char* sSavePath);
 	bool play_save_stop();
-    int64_t get_current_dts();
-    void get_record_list(vector<string> &vec);
-    void get_record_history(map<string, int> &history);
+	int64_t get_current_dts();
+	void get_record_list(vector<string> &vec);
+	void play_next_file(string strCurFile);
+    void play_pre_file(string strCurFile);
+	void get_record_history(map<string, FileInfo> &history);
+private:
+	string get_next_file(string strCurFile);
+    string get_pre_file(string strCurFile);
+	string get_cur_file();
+	int64_t get_cur_play_time();
 public:
 	std::vector<string> m_vecFileList;
 private:
@@ -43,6 +51,9 @@ private:
     int framerate;
     CMp4Muxer* mp4_muxer;
 	CDecoder* m_pDecoder;
+	HWND m_hWnd;
+	std::map<string,FileInfo> m_mapRecordHistory;
+	CVorxMutex m_mutex;
 
 };
 #endif

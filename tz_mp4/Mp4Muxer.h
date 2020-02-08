@@ -3,6 +3,12 @@
 #define _MP4_MUXER_H_
 #include "common.h"
 
+typedef struct FileInfo {
+    int64_t start_time;
+    int64_t duration;
+	int64_t all_time;
+}FileInfo;
+
 class CMessage
 {
 public:
@@ -68,6 +74,7 @@ private:
     int framerate;
 public:
     int init_segment(AVFormatContext *ifmt_ctx = NULL);
+    int64_t get_start_time();
     int64_t get_duration();
     void update_duration(int64_t dts);
     int ffmpeg_muxing(CMessage* msg);
@@ -95,7 +102,7 @@ public:
     void set_delay_time(int64_t delay);
     int64_t get_current_dts();
     void get_record_list(vector<string> &vec);
-    void get_record_history(map<string, int> &history);
+    void get_record_history(map<string, FileInfo> &history);
 private:
     int dump_packets(int max_count, CMessage** pmsg, int& count);
     bool create_multi_directory(void);
@@ -119,7 +126,7 @@ private:
     CVorxMutex mutex_period;
     vector<string> segments_period;
     CVorxMutex mutex_history;
-    map<string, int> segments_history;
+    map<string, FileInfo> segments_history;
     CVorxThread thread;
     AVCodecParserContext *parser;
     AVCodecContext *c;

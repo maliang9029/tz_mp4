@@ -7,10 +7,16 @@
 #define SEPARATOR_CHAR "?"
 
 int64_t pkt_time_stamp = 0;
-AVRational in_time_base = AVRational{1, 1200000};
-AVRational mux_timebase = in_time_base;
-AVRational TIME_BASE = AVRational{1, AV_TIME_BASE};
 
+#if _MSC_VER == 1500
+	AVRational in_time_base = /*AVRational*/{1, 1200000};
+	AVRational mux_timebase = in_time_base;
+	AVRational TIME_BASE = /*AVRational*/{1, AV_TIME_BASE};
+#else
+	AVRational in_time_base = AVRational{1, 1200000};
+	AVRational mux_timebase = in_time_base;
+	AVRational TIME_BASE = AVRational{1, AV_TIME_BASE};
+#endif
 static int hevc_probe(char *buf, int buf_size)
 {
     uint32_t code = -1;
@@ -279,7 +285,7 @@ int CMp4Segment::init_segment(AVFormatContext *ifmt_ctx)
     if (ret < 0) {
         return MP4_ERROR;
     }
-    //设置输出FMP4的参数，并写文件头信�?
+    //设置输出FMP4的参数，并写文件头信?
     av_dict_set(&opts, "movflags", "frag_keyframe+empty_moov", 0);
 	ret = avformat_write_header(o_fmt_ctx, &opts);
     if (ret < 0) {
@@ -289,10 +295,18 @@ int CMp4Segment::init_segment(AVFormatContext *ifmt_ctx)
     return ret;
 }
 
+int64_t CMp4Segment::get_start_time()
+{
+    if (segment_start_time != AV_NOPTS_VALUE) {
+        return av_rescale_q(segment_start_time, mux_timebase, TIME_BASE) / 1000;//ms
+    }
+    return 0;
+}
+
 int64_t CMp4Segment::get_duration()
 {
     //ms
-    return av_rescale_q(duration, mux_timebase, TIME_BASE) / 1000;
+    return av_rescale_q(duration, mux_timebase, TIME_BASE) / 1000;//ms
 }
 
 void CMp4Segment::update_duration(int64_t dts)
@@ -316,9 +330,12 @@ int CMp4Segment::ffmpeg_muxing(CMessage* msg)
      }
 
      update_duration(msg->pkt->dts);
-     int64_t t = get_duration();
-     printf("dts:%lld, duration: %lld, size:%d, key_frame:%d\n", msg->pkt->dts, t, msg->pkt->size, msg->pkt->flags);
-     ret = av_interleaved_write_frame(o_fmt_ctx, msg->pkt);
+     int64_t dur = get_duration();
+     int64_t dts = av_rescale_q(msg->pkt->dts, mux_timebase, TIME_BASE) / 1000;//ms
+#if PRINT_
+     printf("dts:%lldms, duration: %lldms, size:%d, key_frame:%d\n", dts, dur, msg->pkt->size, msg->pkt->flags);
+#endif    
+	 ret = av_interleaved_write_frame(o_fmt_ctx, msg->pkt);
      if (ret < 0) {
         return MP4_ERROR;
      }
@@ -711,15 +728,19 @@ int CMp4Muxer::refresh_period_list(string filename)
 int CMp4Muxer::refresh_history_list(string filename)
 {
     int ret = MP4_SUCCESS;
-    map<string, int> _segments_history;
-    map<string, int>::iterator it;
+    map<string, FileInfo> _segments_history;
+    map<string, FileInfo>::iterator it;
     // the segments_period to remove
     vector<string> segment_to_remove;
-    int len = current->get_duration() / 1000;//second
+    int64_t len = current->get_duration();//ms
+    int64_t start_time = current->get_start_time();//ms
     //update segments_history
     {
         CAutoMutex lock(&mutex_history);
-        segments_history[filename] = len;
+        FileInfo info;
+        info.start_time = start_time;
+        info.duration = len;
+        segments_history[filename] = info;
         if (!segments_history.empty()) {
             int remove_index = (int)segments_history.size() - record_history_window;
             for (int i = 0; i < remove_index && !segments_history.empty(); i++) {
@@ -751,11 +772,16 @@ int CMp4Muxer::refresh_history_list(string filename)
 
         for (it = _segments_history.begin(); it != _segments_history.end(); it++) {
             string mp4_file = it->first;
-            int len = it->second;
-            char size[256];
-            memset(size, 0, sizeof(size));
-            _itoa_s(len, size, sizeof(size) - 1, 10);
-            string ss = mp4_file + SEPARATOR_CHAR + (string)size;
+            FileInfo info = it->second;
+            char start_time[256];
+            char duration[256];
+            memset(start_time, 0, sizeof(start_time));
+            memset(duration, 0, sizeof(duration));
+            _snprintf_s(start_time, sizeof(start_time) - 1, "%lld", info.start_time);
+            _snprintf_s(duration, sizeof(duration) - 1, "%lld", info.duration);
+            //_itoa_s(len, size, sizeof(size) - 1, 10);
+            string ss = mp4_file + SEPARATOR_CHAR + (string)start_time
+                                 + SEPARATOR_CHAR + (string)duration;
             ofs << ss.c_str() << endl;
         }
         ofs.close();
@@ -779,6 +805,7 @@ int CMp4Muxer::mp4_muxing(CMessage* msg)
     }
     current_dts = msg->pkt->dts;
     current->ffmpeg_muxing(msg);
+    int64_t cur = get_current_dts();
     duration = current->get_duration();
     if (need_change_file && duration >= delay_time) {
         segment_shrink();
@@ -812,19 +839,27 @@ void CMp4Muxer::init_segments_history()
     while (getline(ifs, line)) {
         string::size_type pos;
         string filename;
-        int len;
+        FileInfo info;
         if ((pos = line.find(SEPARATOR_CHAR)) != string::npos) {
             filename = line.substr(0, pos);
-            string size = line.substr(pos + 1);
-            len = atoi(size.c_str());
-            segments_history[filename] = len;
+            string fileinfo = line.substr(pos + 1);
+            string::size_type pos1;
+            if ((pos1 = fileinfo.find(SEPARATOR_CHAR)) != string::npos) {
+                string start_time = fileinfo.substr(0, pos1);
+                string duration = fileinfo.substr(pos1 + 1);
+                if (start_time != "" && duration != "") {
+                    sscanf_s(start_time.c_str(), "%lld", &info.start_time);
+                    sscanf_s(duration.c_str(), "%lld", &info.duration);
+                    segments_history[filename] = info;
+                }
+            }
         }
     }
 }
 
 int64_t CMp4Muxer::get_current_dts()
 {
-    return current_dts;
+    return av_rescale_q(current_dts, mux_timebase, TIME_BASE) / 1000;//ms
 }
 
 void CMp4Muxer::get_record_list(vector<string> &vec)
@@ -834,7 +869,7 @@ void CMp4Muxer::get_record_list(vector<string> &vec)
     return;
 }
 
-void CMp4Muxer::get_record_history(map<string, int> &history)
+void CMp4Muxer::get_record_history(map<string, FileInfo> &history)
 {
     CAutoMutex lock(&mutex_history);
     history = segments_history;
